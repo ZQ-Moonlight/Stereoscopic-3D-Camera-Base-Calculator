@@ -60,7 +60,7 @@
 
 💡 *祝轴距精准，也祝观众的双眼始终安然无恙。*
 
-🎧 *本项目采用 vibe coding 理念构建——让立体参数计算也带上一丝节奏感，毕竟好的立体电影，本就该有让人沉浸的律动。*
+🎧 *本项目采用 vibe coding 构建*
 
 <br>
 
@@ -120,7 +120,7 @@ V2.0 represents a complete overhaul, evolving from a basic formula validator int
 
 💡 *May your interaxial always be on point, and may your audience’s eyes never diverge.*
 
-🎧 *This project is built with a vibe coding mindset — because even stereoscopic calculations deserve a rhythm of their own. After all, a great 3D film is all about the immersive flow.*
+🎧 *This project is built with vibe coding.*
 
 ---
 
