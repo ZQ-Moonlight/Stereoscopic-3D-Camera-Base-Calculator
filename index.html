@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 摄像机最佳轴距 (Base) 计算器</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --primary-hover: #005bb5;
+            --bg-color: #f5f5f7;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background-color: var(--card-bg);
+            max-width: 500px;
+            width: 100%;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+        h2 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .preset-select {
+            margin-bottom: 8px;
+            background-color: #f8f9fa;
+            font-size: 0.95rem;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .checkbox-group input {
+            margin-right: 8px;
+            width: auto;
+        }
+        .result-box {
+            background-color: #e8f0fe;
+            border: 1px solid #aecbfa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 25px;
+        }
+        .result-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: #0c52a3;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #aecbfa;
+            padding-bottom: 4px;
+        }
+        .highlight {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #d93025;
+        }
+        .note {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 15px;
+            line-height: 1.4;
+        }
+        /* 复制按钮样式 */
+        .copy-btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+        }
+        .copy-btn:hover {
+            background-color: var(--primary-hover);
+        }
+        .copy-btn:active {
+            transform: scale(0.98);
+        }
+        .copy-btn svg {
+            margin-right: 8px;
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        /* Toast 提示框样式 */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px 20px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>3D 轴距实时计算器<br>(Bercovitz 公式)</h2>
+
+    <div class="form-group">
+        <label>放映屏幕物理宽度 (毫米 mm)</label>
+        <select id="screenPreset" class="preset-select" onchange="updateScreenInput()">
+            <option value="custom">-- 自定义屏幕宽度 --</option>
+            <optgroup label="个人与便携设备">
+                <option value="150">手机横屏 (约 6.7 寸) - 150 mm</option>
+                <option value="240">平板电脑 (约 11 寸) - 240 mm</option>
+                <option value="597">电脑显示器 (27 寸 16:9) - 597 mm</option>
+            </optgroup>
+            <optgroup label="VR头显 / AR眼镜">
+                <option value="2214">VR头显 (Vision Pro/Quest 3/PICO) 虚拟100寸 - 2214 mm</option>
+                <option value="4428">VR头显 (个人虚拟巨幕模式) 虚拟200寸 - 4428 mm</option>
+            </optgroup>
+            <optgroup label="客厅电视">
+                <option value="1217">电视机 (55 寸 16:9) - 1217 mm</option>
+                <option value="1439">电视机 (65 寸 16:9) - 1439 mm</option>
+                <option value="1660">电视机 (75 寸 16:9) - 1660 mm</option>
+            </optgroup>
+            <optgroup label="专业影院">
+                <option value="6200">学校系内影院 (6.2 米 Scope) - 6200 mm</option>
+                <option value="10000">标准电影院银幕 (10 米) - 10000 mm</option>
+                <option value="22000">IMAX / 巨幕 (22 米) - 22000 mm</option>
+            </optgroup>
+        </select>
+        <input type="number" id="screenWidth" value="2214" oninput="checkScreenInput()">
+    </div>
+
+    <div class="form-group">
+        <label>相机传感器物理宽度 (毫米 mm)</label>
+        <select id="sensorPreset" class="preset-select" onchange="updateSensorInput()">
+            <option value="custom">-- 自定义传感器宽度 --</option>
+            <optgroup label="微单 / 单反">
+                <option value="17.3">M43 画幅 (松下/奥林巴斯) - 17.3 mm</option>
+                <option value="23.6">APS-C 画幅 (索尼/富士) - 23.6 mm</option>
+                <option value="36" selected>全画幅 Full Frame - 36.0 mm</option>
+            </optgroup>
+            <optgroup label="专业电影机">
+                <option value="24.9">Super 35 (ARRI/RED/Sony) - 24.9 mm</option>
+                <option value="36">全画幅 (ARRI LF/RED Monstro) - 36.0 mm</option>
+                <option value="54.1">电影大画幅 (ARRI Alexa 65) - 54.1 mm</option>
+                <option value="70.4">IMAX 70mm 胶片 - 70.4 mm</option>
+            </optgroup>
+            <optgroup label="中大型画幅 (商用)">
+                <option value="43.8">中画幅 (富士 GFX/哈苏 X) - 43.8 mm</option>
+            </optgroup>
+            <optgroup label="Apple iPhone 主摄">
+                <option value="9.8">iPhone 14 Pro / 15 Pro / 16 Pro 系列 - 9.8 mm</option>
+                <option value="8.1">iPhone 15 / 16 标准版系列 - 8.1 mm</option>
+                <option value="7.7">iPhone 13 Pro / 14 标准版系列 - 7.7 mm</option>
+                <option value="6.9">iPhone 12 Pro Max - 6.9 mm</option>
+            </optgroup>
+        </select>
+        <input type="number" id="sensorWidth" value="36" step="0.1" oninput="checkSensorInput()">
+    </div>
+
+    <div class="form-group">
+        <label>镜头物理焦距 F (毫米 mm)</label>
+        <input type="number" id="focalLength" value="50" oninput="calculate()">
+    </div>
+
+    <div class="form-group">
+        <label>最近物体距离 N (米 m)</label>
+        <input type="number" id="nearestDist" value="2" step="0.1" oninput="calculate()">
+    </div>
+
+    <div class="form-group">
+        <label>最远物体距离 L (米 m)</label>
+        <input type="number" id="largestDist" value="10" step="0.1" oninput="calculate()">
+        <div class="checkbox-group">
+            <input type="checkbox" id="isInfinity" onchange="toggleInfinity()">
+            <label for="isInfinity" style="font-weight: normal; margin-bottom: 0;">背景在无限远</label>
+        </div>
+    </div>
+
+    <div class="result-box">
+        <h3>计算结果</h3>
+        <div class="result-item">
+            <span>最大屏幕物理视差:</span>
+            <span id="resScreenParallax">0 mm</span>
+        </div>
+        <div class="result-item">
+            <span>系统放大率 (Magnification):</span>
+            <span id="resMag">0 x</span>
+        </div>
+        <div class="result-item">
+            <span>传感器允许视差 (P):</span>
+            <span id="resP">0 mm</span>
+        </div>
+        <div class="result-item" style="border-bottom: none; margin-top: 10px;">
+            <span>最佳摄像机轴距 (B):</span>
+            <span class="highlight" id="resBase">0.00 mm</span>
+        </div>
+    </div>
+
+    <button class="copy-btn" onclick="copyResults()">
+        <svg viewBox="0 0 24 24">
+            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+        </svg>
+        一键复制参数报告
+    </button>
+    
+    <div class="note">
+        * 注：距离参数输入为“米”，程序已自动换算为毫米代入公式计算。<br>
+        * 巨幕模式下，入屏正视差上限已硬性锁定在最高 50mm 以内。
+    </div>
+</div>
+
+<!-- 自定义消息提示框 -->
+<div id="toast"></div>
+
+<script>
+    let currentP = "0";
+
+    // 新增：自动更新屏幕宽度输入框并联动屏幕类型
+    function updateScreenInput() {
+        const preset = document.getElementById('screenPreset').value;
+        if (preset !== 'custom') {
+            document.getElementById('screenWidth').value = preset;
+        }
+        calculate();
+    }
+
+    // 新增：手动输入屏幕宽度时，自动匹配预设下拉框和屏幕类型
+    function checkScreenInput() {
+        const val = parseFloat(document.getElementById('screenWidth').value);
+        const select = document.getElementById('screenPreset');
+        let matched = false;
+        for (let i = 0; i < select.options.length; i++) {
+            if (parseFloat(select.options[i].value) === val) {
+                select.selectedIndex = i;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) select.value = 'custom';
+        calculate();
+    }
+
+    // 新增：自动更新传感器输入框
+    function updateSensorInput() {
+        const preset = document.getElementById('sensorPreset').value;
+        if (preset !== 'custom') {
+            document.getElementById('sensorWidth').value = preset;
+        }
+        calculate();
+    }
+
+    // 新增：手动输入传感器时，自动反向匹配预设
+    function checkSensorInput() {
+        const val = parseFloat(document.getElementById('sensorWidth').value);
+        const select = document.getElementById('sensorPreset');
+        let matched = false;
+        for (let i = 0; i < select.options.length; i++) {
+            if (parseFloat(select.options[i].value) === val) {
+                select.selectedIndex = i;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) select.value = 'custom';
+        calculate();
+    }
+
+    function toggleInfinity() {
+        const isInfinity = document.getElementById('isInfinity').checked;
+        const largestDistInput = document.getElementById('largestDist');
+        largestDistInput.disabled = isInfinity;
+        calculate();
+    }
+
+    function calculate() {
+        // 获取输入值
+        const screenWidth = parseFloat(document.getElementById('screenWidth').value) || 0;
+        const sensorWidth = parseFloat(document.getElementById('sensorWidth').value) || 0;
+        const focalLength = parseFloat(document.getElementById('focalLength').value) || 0;
+        const nearestDist = (parseFloat(document.getElementById('nearestDist').value) || 0) * 1000; 
+        let largestDist = (parseFloat(document.getElementById('largestDist').value) || 0) * 1000; 
+        const isInfinity = document.getElementById('isInfinity').checked;
+
+        if (screenWidth === 0 || sensorWidth === 0 || focalLength === 0 || nearestDist === 0) {
+            return; 
+        }
+
+        // 1. 计算最大屏幕物理视差
+        let maxScreenParallax = screenWidth * 0.03;
+        // 如果放映屏幕物理宽度大于 77 英寸 (约 1705mm)，自动按巨幕处理
+        if (screenWidth > 1705) {
+            if (maxScreenParallax > 50) {
+                maxScreenParallax = 50;
+            }
+        }
+
+        // 2. 计算系统放大率
+        const mag = screenWidth / sensorWidth;
+
+        // 3. 计算传感器上的最大视差 (P)
+        const P = maxScreenParallax / mag;
+        currentP = P.toFixed(3); // 保存供复制使用
+
+        // 4. 计算最佳摄像机轴距 (B)
+        let B = 0;
+        if (isInfinity) {
+            B = P * ((nearestDist / focalLength) - 0.5);
+        } else {
+            if (largestDist <= nearestDist) {
+                document.getElementById('resBase').innerText = "错误：最远距离需大于最近距离";
+                return;
+            }
+            const term1 = (largestDist * nearestDist) / (largestDist - nearestDist);
+            const term2 = (1 / focalLength) - ((largestDist + nearestDist) / (2 * largestDist * nearestDist));
+            B = P * term1 * term2;
+        }
+
+        // 更新 UI
+        document.getElementById('resScreenParallax').innerText = maxScreenParallax.toFixed(2) + ' mm';
+        document.getElementById('resMag').innerText = mag.toFixed(1) + ' 倍';
+        document.getElementById('resP').innerText = currentP + ' mm';
+        
+        if (B > 0) {
+            document.getElementById('resBase').innerText = B.toFixed(2) + ' mm';
+        } else {
+            document.getElementById('resBase').innerText = "参数无效 (B≤0)";
+        }
+    }
+
+    // 显示提示框函数 (代替 alert)
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.innerText = message;
+        toast.className = "show";
+        setTimeout(function(){ 
+            toast.className = toast.className.replace("show", ""); 
+        }, 2500);
+    }
+
+    // 复制结果逻辑
+    function copyResults() {
+        const baseResult = document.getElementById('resBase').innerText;
+        
+        if (baseResult.includes("错误") || baseResult.includes("无效")) {
+            showToast("⚠️ 请先修正错误的输入参数");
+            return;
+        }
+
+        const focalLength = document.getElementById('focalLength').value;
+        const nearestDist = document.getElementById('nearestDist').value;
+        const isInfinity = document.getElementById('isInfinity').checked;
+        const largestDist = isInfinity ? "无限远 (Infinity)" : document.getElementById('largestDist').value + " m";
+        const screenWidth = document.getElementById('screenWidth').value;
+
+        // 构建格式化的报告文本
+        const reportText = `【3D拍摄参数报告】\n镜头焦距 (F): ${focalLength} mm\n最近距离 (N): ${nearestDist} m\n最远距离 (L): ${largestDist}\n----------------------\n放映端宽: ${screenWidth} mm\n传感器视差: ${currentP} mm\n----------------------\n最佳摄像机轴距 (Base):\n>>> ${baseResult} <<<`;
+
+        // 使用通用兼容的 execCommand 进行复制
+        const textArea = document.createElement("textarea");
+        textArea.value = reportText;
+        // 防止页面滚动
+        textArea.style.position = "fixed";
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showToast("✅ 参数报告已复制，可直接粘贴发送");
+            } else {
+                showToast("❌ 复制失败，请手动记录");
+            }
+        } catch (err) {
+            showToast("❌ 您的浏览器不支持快捷复制");
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    // 初始化计算 (增加了对新增预设的初始匹配)
+    window.onload = function() {
+        checkScreenInput();
+        checkSensorInput();
+        calculate();
+    };
+</script>
+
+</body>
+</html>
