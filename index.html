@@ -24,9 +24,13 @@
         本工具采用 GNU AGPLv3 许可证发布。
         任何修改、分发或通过网络提供服务的使用，必须公开修改后的完整源代码。
     -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D 摄像机最佳轴距计算器 Pro Max</title>
+    <!-- 引入 html2canvas 用于本地将 HTML 渲染为高清图片 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -96,27 +100,13 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 20px;
         }
-        h2 {
-            font-size: 1.6rem;
-            margin: 0;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
+        h2 { font-size: 1.6rem; margin: 0; font-weight: 800; letter-spacing: -0.5px; }
         .theme-toggle {
-            background: var(--advanced-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            background: var(--advanced-bg); border: 1px solid var(--border-color);
+            color: var(--text-color); padding: 8px 16px; border-radius: 20px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.3s ease;
         }
-        .theme-toggle:hover { 
-            border-color: var(--primary-color); 
-            background: var(--result-bg);
-        }
+        .theme-toggle:hover { border-color: var(--primary-color); background: var(--result-bg); }
 
         .main-layout { display: flex; flex-direction: column; gap: 20px; }
         @media (min-width: 768px) {
@@ -127,20 +117,13 @@
         .form-group { flex: 1; margin-bottom: 18px; }
         .form-row .form-group { margin-bottom: 0; }
         
-        label {
-            display: block; font-weight: 600; margin-bottom: 8px;
-            font-size: 0.9rem; color: var(--label-color);
-        }
-        .hint-label {
-            font-size: 0.75rem; color: var(--primary-color);
-            font-weight: normal; opacity: 0.8;
-        }
+        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; color: var(--label-color); }
+        .hint-label { font-size: 0.75rem; color: var(--primary-color); font-weight: normal; opacity: 0.8; }
         
         input[type="number"], select {
             width: 100%; padding: 12px 14px; border: 1px solid var(--border-color);
             border-radius: 12px; font-size: 1rem; box-sizing: border-box;
-            background-color: var(--input-bg); color: var(--text-color);
-            transition: all 0.3s ease;
+            background-color: var(--input-bg); color: var(--text-color); transition: all 0.3s ease;
         }
         input[type="number"]:focus, select:focus {
             outline: none; border-color: var(--primary-color);
@@ -167,16 +150,15 @@
         }
         .accordion-content.show { display: block; padding-top: 20px; padding-bottom: 20px; }
 
+        /* ====== 可视化组件样式 ====== */
         .visualizer-section {
-            background-color: var(--advanced-bg); padding: 20px;
-            border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;
+            background-color: var(--advanced-bg); padding: 20px; border-radius: 16px; 
+            border: 1px solid var(--border-color); margin-bottom: 20px;
         }
         .visualizer-container {
             position: relative; height: 70px; margin-top: 15px; touch-action: pan-y; user-select: none;
         }
-        .vis-cam {
-            position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 1.8rem; z-index: 5;
-        }
+        .vis-cam { position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 1.8rem; z-index: 5; }
         .vis-track-container { position: absolute; left: 45px; right: 20px; top: 0; bottom: 0; }
         .vis-track {
             position: absolute; top: 50%; left: 0; right: 0; height: 4px;
@@ -206,6 +188,7 @@
         .vis-s .vis-label { background: rgba(0, 122, 255, 0.9); }
         .vis-l .vis-label { background: rgba(52, 199, 89, 0.9); }
         
+        /* ====== 结果展示区 ====== */
         .result-box {
             background-color: var(--result-bg); border: 1px solid var(--result-border);
             padding: 20px; border-radius: 16px; margin-top: 0px; display: flex; flex-direction: column;
@@ -217,16 +200,20 @@
         }
         .highlight { font-size: 2.2rem; font-weight: 800; color: var(--highlight-color); line-height: 1.1; }
         
+        /* 1/30法则对比样式 */
         .rule-compare {
-            font-size: 0.8rem; margin-top: 8px; padding: 10px; border-radius: 10px;
-            background-color: rgba(0,0,0,0.03); color: var(--label-color); line-height: 1.4;
+            font-size: 0.85rem; margin-top: 15px; padding: 12px; border-radius: 10px;
+            background-color: rgba(0,0,0,0.03); color: var(--label-color); line-height: 1.5;
+            border-left: 3px solid var(--border-color);
         }
         [data-theme="dark"] .rule-compare { background-color: rgba(255,255,255,0.05); }
         .rule-alert { color: var(--highlight-color); font-weight: bold; }
         .rule-safe { color: #34c759; font-weight: bold; }
         .rule-optimal { color: var(--primary-color); font-weight: bold; }
+
         .rig-hint { font-size: 0.85rem; color: var(--label-color); margin-top: 10px; text-align: right; font-weight: 500;}
 
+        /* 终端文本框样式 */
         .terminal-box {
             width: 100%; height: 230px; background-color: #1e1e1e; color: #4af626; 
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -257,7 +244,7 @@
         .guide-box ul { padding-left: 20px; margin: 8px 0; }
         .guide-box li { margin-bottom: 6px; }
 
-        /* ====== 高级视觉数据卡片样式 (固定 9:16 比例版) ====== */
+        /* ====== 高级视觉数据卡片样式 (完美防裁切 9:16) ====== */
         .report-card-wrapper {
             width: 100%; display: flex; justify-content: center; overflow: hidden; margin: 0 auto;
         }
@@ -266,15 +253,15 @@
             background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
                               linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
             background-size: 20px 20px; color: #ffffff;
+            
+            /* 强制 9:16 标准壁纸/海报比例 */
             width: 450px; height: 800px; flex-shrink: 0; transform-origin: top center;
+            
             border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1); font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             display: flex; flex-direction: column;
         }
-        .rc-header {
-            background: linear-gradient(135deg, #005bb5 0%, #001a33 100%);
-            padding: 25px; flex-shrink: 0;
-        }
+        .rc-header { background: linear-gradient(135deg, #005bb5 0%, #001a33 100%); padding: 25px; flex-shrink: 0; }
         .rc-title { font-size: 1.4rem; font-weight: 800; margin: 0; letter-spacing: 0.5px; color: #fff;}
         .rc-subtitle { font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 6px; text-transform: uppercase; letter-spacing: 2px; }
         
@@ -303,9 +290,10 @@
         }
         .rc-final-label { font-size: 0.85rem; color: #0a84ff; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
         .rc-final-value { font-size: 2.8rem; font-weight: 900; color: #fff; margin: 5px 0; text-shadow: 0 0 20px rgba(10,132,255,0.5); }
+        .rc-final-sub { font-size: 0.85rem; color: #aaa; }
         .rc-hit-box {
             display: flex; justify-content: space-between; background: rgba(52, 199, 89, 0.1);
-            padding: 12px 16px; border-radius: 12px; border-left: 4px solid #34c759; align-items: center;
+            padding: 15px 18px; border-radius: 12px; border-left: 4px solid #34c759; align-items: center;
         }
         .rc-hit-val { font-size: 1.2rem; font-weight: bold; color: #34c759; }
 
@@ -343,7 +331,7 @@
                     <label for="useAngular" style="font-weight: bold; margin-bottom: 0; color: var(--primary-color);">启用角视差法则 (结合观看距离)</label>
                 </div>
                 <div style="font-size: 0.8rem; color: #888; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
-                    * 推荐：巨幕或 IMAX 影院环境下，强烈建议开启角视差模式进行推演。
+                    * 推荐：巨幕或 IMAX 影院环境下，强烈建议开启角视差模式进行精准推演。
                 </div>
 
                 <div id="modePercentage">
@@ -425,7 +413,7 @@
                     <input type="number" id="sensorWidth" value="36" step="0.1" oninput="checkSensorInput()">
                 </div>
                 <div class="form-group">
-                    <label>🖥️ 后期时间线分辨率<br><span class="hint-label">(仅按最终工程设置，与拍摄分辨率无关)</span></label>
+                    <label>🖥️ 后期工程水平分辨率<br><span class="hint-label">(仅按最终时间线设置，与拍摄分辨率无关)</span></label>
                     <select id="resPreset" class="preset-select" onchange="updateResInput()">
                         <option value="custom">-- 自定义 --</option>
                         <optgroup label="1080p / 2K">
@@ -455,7 +443,7 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>👤 主体/汇聚距离 (米 m)<br><span class="hint-label">(用于后期 ZPS 平移)</span></label>
+                    <label>👤 主体/汇聚距离 (米 m)<br><span class="hint-label">(仅用于推算后期 ZPS 偏移量)</span></label>
                     <input type="number" id="subjectDist" value="4" step="0.1" oninput="calculate()">
                 </div>
                 <div class="form-group">
@@ -501,8 +489,8 @@
                     BEST CAMERA BASE (IA) / 最佳物理轴距
                 </div>
                 
-                <!-- 1/30 法则对比 -->
-                <div class="rule-compare" id="resRuleCompare" style="margin-top: 20px;"></div>
+                <!-- 1/30 法则智能对比区 -->
+                <div class="rule-compare" id="resRuleCompare"></div>
 
                 <div id="rigHint" class="rig-hint"></div>
                 
@@ -526,6 +514,7 @@
             <div class="accordion-content" id="visualCardPanel" style="padding-left: 0; padding-right: 0;">
                 
                 <div class="report-card-wrapper" id="cardWrapper">
+                    <!-- 完美 9:16 Data Card (强制 450x800) -->
                     <div class="report-card" id="visualCardNode">
                         <div class="rc-header">
                             <h2 class="rc-title">STEREOSCOPIC DATA</h2>
@@ -605,7 +594,6 @@
                     <ul>
                         <li><b>像素平移 (Pixel Shift)：</b> 上方计算出的 px 值，就是你在后期软件中需要将画面横向滑动的绝对像素量，从而把主体拽回零视差面。</li>
                         <li><b>工程 vs 拍摄分辨率：</b> 后期像素平移计算仅依赖<b>后期工程/时间线的分辨率</b>（如放入 4K Scope 时间线，就填 4096）。无论前期拍摄用 6K 还是 8K，只要最终在时间线上对齐，就必须按时间线工程分辨率算。</li>
-                        <li><b>Scope 与 Flat 差异：</b> 前期拍摄的有效传感器宽度和后期 DCP 打包分辨率不同，会直接影响最终的像素平移量，请确保输入实际使用的工程分辨率。</li>
                     </ul>
                 </div>
             </div>
@@ -769,6 +757,7 @@
 
         if (screenWidth === 0 || sensorWidth === 0 || focalLength === 0 || nearestDist === 0) return; 
 
+        // 核心公式演算
         let maxScreenParallax = 0;
         const hardLimit = parseFloat(document.getElementById('maxParallaxLimit').value) || 50;
 
@@ -785,29 +774,31 @@
         const mag = screenWidth / sensorWidth;
         const P = maxScreenParallax / mag;
 
-        // 核心修复: 防卡死的输入框自动纠偏纠错机制 (智能弹簧)
+        // 核心修复: 防卡死的自动纠错机制 (智能钳制)
         let actualL = largestDist;
         const davisAlert = document.getElementById('davisAlert');
         davisAlert.style.display = 'none';
+        
+        // 保证 L > N，否则直接返回错误，不更新 UI
+        if (!isInfinity && actualL <= nearestDist) {
+            document.getElementById('resBase').innerText = "无效 (L≤N)";
+            document.getElementById('resRuleCompare').innerText = "";
+            document.getElementById('rigHint').innerText = "";
+            document.getElementById('textReportBox').value = "⚠️ 参数无效\n请检查: 最远距离(L) 必须大于 最近距离(N)";
+            updateVisualizer(); 
+            return;
+        }
 
-        if (!isInfinity) {
-            if (useDavis) {
-                if (actualL < 2 * nearestDist) {
-                    actualL = 2 * nearestDist;
-                    document.getElementById('largestDist').value = (actualL / 1000).toFixed(1);
-                    davisAlert.style.display = 'block';
-                }
-            } else {
-                if (actualL <= nearestDist) {
-                    actualL = nearestDist + 100; // 最低比近景多 0.1 米
-                    document.getElementById('largestDist').value = (actualL / 1000).toFixed(1);
-                }
-            }
+        if (!isInfinity && useDavis && actualL < 2 * nearestDist) {
+            actualL = 2 * nearestDist;
+            document.getElementById('largestDist').value = (actualL / 1000).toFixed(1);
+            davisAlert.style.display = 'block';
         }
 
         let B = 0;
         const reportBox = document.getElementById('textReportBox');
 
+        // 1/30 法则基准线 (N / 30)
         const oneThirtyBase = nearestDist / 30;
         globalData.oneThirty = oneThirtyBase.toFixed(2);
 
@@ -834,13 +825,23 @@
             globalData.base = B.toFixed(2);
 
             let diffPercent = Math.abs(B - oneThirtyBase) / oneThirtyBase;
-            if (diffPercent < 0.15) globalData.ruleCompareText = "▶ 结论：当前结果与 1/30 经验法则<span class='rule-safe'>极其吻合</span>，处于安全宽容度内。";
-            else if (B < oneThirtyBase) globalData.ruleCompareText = "▶ 结论：当前结果更保守，如果按 1/30 强行拍摄，将导致观众<span class='rule-alert'>视差严重超限！</span>";
-            else globalData.ruleCompareText = "▶ 结论：1/30 法则在此场景下过于保守，Bercovitz 为您<span class='rule-optimal'>释放了更多立体空间</span>。";
+            
+            // 智能焦距补偿提示：解释 1/30 法则为何有时会“明显不对”
+            let ruleTextHTML = `<div><b>参考 1/30 经验法则 (N/30) :</b> ${globalData.oneThirty} mm</div>`;
+            if (diffPercent < 0.15) {
+                globalData.ruleCompareText = "当前与 1/30 法则巧合吻合";
+                ruleTextHTML += `<div style="margin-top: 6px; color: #888;">▶ 结论：当前结果与 1/30 法则<span class='rule-safe'>极其吻合</span>，处于安全宽容度内。</div>`;
+            } else if (B < oneThirtyBase) {
+                globalData.ruleCompareText = "Bercovitz 防超限";
+                ruleTextHTML += `<div style="margin-top: 6px; color: #888;">▶ 结论：Bercovitz 结果更保守。因为您使用了长焦或巨幕，按传统的 1/30 拍将导致观众<span class='rule-alert'>视差严重超限</span>！</div>`;
+            } else {
+                globalData.ruleCompareText = "释放更多立体空间";
+                ruleTextHTML += `<div style="margin-top: 6px; color: #888;">▶ 结论：1/30 仅为基于 50mm 标头的粗略经验。因为您使用了广角或小尺寸屏幕，Bercovitz 为您<span class='rule-optimal'>释放了更多立体空间</span>。</div>`;
+            }
             
             document.getElementById('resBase').innerText = globalData.base + " mm";
-            document.getElementById('resRuleCompare').innerHTML = `<div>Ref 1/30 轴距: <b>${globalData.oneThirty} mm</b></div><div style="margin-top: 4px;">${globalData.ruleCompareText}</div>`;
-            document.getElementById('rigHint').innerHTML = B < 85 ? '💡 物理距离过窄，可能需使用 <b>反射式支架</b> (Beamsplitter)' : '💡 空间充裕，可使用普通 <b>并排式支架</b> (Side-by-Side)';
+            document.getElementById('resRuleCompare').innerHTML = ruleTextHTML;
+            document.getElementById('rigHint').innerHTML = B < 85 ? '💡 物理距离过窄，可能需使用 <b>反射式支架</b>' : '';
 
             const focalLengthStr = focalLength.toString();
             const nearestDistStr = (nearestDist/1000).toString();
@@ -875,9 +876,7 @@ Shift: L➡️${globalData.halfPx}px | R⬅️${globalData.halfPx}px
     
     function updateVisualCardDOM(focal, near, zps, far) {
         document.getElementById('vr-base').innerText = globalData.base + " mm";
-        
-        let strippedCompareText = globalData.ruleCompareText.replace(/<[^>]*>?/gm, '').replace('▶ 结论：', '');
-        document.getElementById('vr-rule-compare').innerText = "Ref 1/30: " + globalData.oneThirty + " mm (" + strippedCompareText.split('，')[0] + ")";
+        document.getElementById('vr-rule-compare').innerText = "Ref 1/30: " + globalData.oneThirty + " mm (" + globalData.ruleCompareText + ")";
         
         document.getElementById('vr-screen').innerText = document.getElementById('screenWidth').value + " mm";
         document.getElementById('vr-sensor').innerText = document.getElementById('sensorWidth').value + " mm";
@@ -920,7 +919,7 @@ Shift: L➡️${globalData.halfPx}px | R⬅️${globalData.halfPx}px
         if (document.getElementById('visualCardPanel').classList.contains('show')) scaleReportCard();
     });
 
-    // ====== 场景深度交互预演 (核心推雪机逻辑更新) ======
+    // ====== 场景深度交互预演 (完美推雪机引擎) ======
     function getVisMax() {
         const nDist = parseFloat(document.getElementById('nearestDist').value) || 0.1;
         const sDist = parseFloat(document.getElementById('subjectDist').value) || 0.1;
@@ -968,7 +967,7 @@ Shift: L➡️${globalData.halfPx}px | R⬅️${globalData.halfPx}px
         let px = clientX - rect.left;
         if (px < 0) px = 0;
         
-        // 修复卡死边缘边界扩充过快导致失真的bug，改为温和递增
+        // 推到最右侧边缘时，动态扩大坐标系上限
         if (px >= rect.width - 2) {
             dragMaxDist += dragMaxDist * 0.02; 
             if (dragMaxDist > 50000) dragMaxDist = 50000;
@@ -979,21 +978,31 @@ Shift: L➡️${globalData.halfPx}px | R⬅️${globalData.halfPx}px
         let newDist = percent * dragMaxDist;
         newDist = Math.max(0.1, Math.round(newDist * 10) / 10); 
         
-        // 拖拽的推雪机防卡死逻辑
+        // 【核心修复】双向推雪机防卡死逻辑
         const nDist = parseFloat(document.getElementById('nearestDist').value) || 0.1;
         const lDist = parseFloat(document.getElementById('largestDist').value) || 0.1;
         const useDavis = document.getElementById('useDavis').checked;
         const isInf = document.getElementById('isInfinity').checked;
 
+        // 如果在拖动远景 L 向左
         if (activeMarkerConfig.id === 'visL' && !isInf) {
             let minL = useDavis ? 2 * nDist : nDist + 0.1;
-            if (newDist < minL) newDist = minL; 
+            if (newDist < minL) {
+                // L 强行推着 N 往回退，绝不卡死
+                if (useDavis) {
+                    document.getElementById('nearestDist').value = (newDist / 2).toFixed(1);
+                } else {
+                    document.getElementById('nearestDist').value = (Math.max(0.1, newDist - 0.1)).toFixed(1);
+                }
+            }
         }
 
+        // 如果在拖动近景 N 向右
         if (activeMarkerConfig.id === 'visN') {
             let maxN = useDavis && !isInf ? lDist / 2 : (isInf ? Infinity : lDist - 0.1);
             if (newDist > maxN) {
                 if (!isInf) {
+                    // N 强行推着 L 往前走，绝不卡死
                     if (useDavis) {
                         document.getElementById('largestDist').value = (newDist * 2).toFixed(1);
                     } else {
