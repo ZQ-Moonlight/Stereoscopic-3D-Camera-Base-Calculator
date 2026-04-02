@@ -312,6 +312,11 @@
                         <option value="10000" selected>标准影院 10m — 10000 mm</option>
                         <option value="6200">中型影院 6.2m — 6200 mm</option>
                     </optgroup>
+                    <optgroup label="VR / AR 头显 Headsets">
+                        <option value="3320">Apple Vision Pro (Cinema 150") — 3320 mm</option>
+                        <option value="2657">Meta Quest 3 (Immersive 120") — 2657 mm</option>
+                        <option value="2214">VR 虚拟屏 Virtual Screen (100") — 2214 mm</option>
+                    </optgroup>
                     <optgroup label="消费 / TV Consumer">
                         <option value="1270">55寸 4K TV (16:9) — 1270 mm</option>
                         <option value="597">27寸显示器 — 597 mm</option>
@@ -380,10 +385,16 @@
                     <label><span data-zh="后期时间线分辨率 (像素宽)" data-en="Timeline Resolution (px wide)">后期时间线分辨率 (像素宽)</span> <span class="en" data-zh="用于计算像素平移量" data-en="Used for HIT calculation">用于计算像素平移量</span></label>
                     <select id="resPreset" class="preset-select" onchange="updateResInput()">
                         <option value="custom" data-zh="— 自定义 —" data-en="— Custom —">— 自定义 —</option>
-                        <option value="4096">4K DCI (4096 px)</option>
-                        <option value="3840" selected>4K UHD (3840 px)</option>
-                        <option value="2048">2K DCI (2048 px)</option>
-                        <option value="1920">HD 1080p (1920 px)</option>
+                        <optgroup label="4K / UHD">
+                            <option value="4096">4K DCI Scope 2.39 (4096 px)</option>
+                            <option value="3996">4K DCI Flat 1.85 (3996 px)</option>
+                            <option value="3840" selected>4K UHD 16:9 (3840 px)</option>
+                        </optgroup>
+                        <optgroup label="2K / HD">
+                            <option value="2048">2K DCI Scope 2.39 (2048 px)</option>
+                            <option value="1998">2K DCI Flat 1.85 (1998 px)</option>
+                            <option value="1920">HD 1080p 16:9 (1920 px)</option>
+                        </optgroup>
                     </select>
                     <input type="number" id="sensorRes" value="3840" oninput="checkResInput()">
                 </div>
@@ -1323,21 +1334,34 @@ function copyTextReport() {
 function downloadVisualCard() {
     if (!globalData.isValid) { showToast(currentLang==='zh'?'⚠ 参数无效，无法生成海报':'⚠ Invalid params'); return; }
     const card = document.getElementById('visualCardNode');
+    const wrapper = document.getElementById('cardWrapper');
     
     // 在截图前临时重置高度/transform以保证截图完整和清晰
     const origTransform = card.style.transform;
+    const origOverflow = wrapper.style.overflow;
+    
+    // 关键修复：解除移动端 overflow: hidden 导致的边界裁切
     card.style.transform = 'none';
+    wrapper.style.overflow = 'visible'; 
     
     showToast(currentLang==='zh'?'⏳ 渲染高清海报中…':'⏳ Rendering Poster...');
-    html2canvas(card, { scale: 2, backgroundColor: '#151517', useCORS: true }).then(canvas => {
+    html2canvas(card, { 
+        scale: 2, 
+        backgroundColor: '#151517', 
+        useCORS: true,
+        windowWidth: card.scrollWidth, // 强制设定视口尺寸防裁剪
+        windowHeight: card.scrollHeight
+    }).then(canvas => {
         // 恢复原有缩放和外观
         card.style.transform = origTransform;
+        wrapper.style.overflow = origOverflow;
         
         const fn = `Stereo3D_F${document.getElementById('focalLength').value}mm_B${globalData.base}mm_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.png`;
         const a = document.createElement('a'); a.download = fn; a.href = canvas.toDataURL('image/png'); a.click();
         showToast(currentLang==='zh'?'✅ 海报已下载！':'✅ Poster Downloaded!');
     }).catch(() => { 
         card.style.transform = origTransform; 
+        wrapper.style.overflow = origOverflow;
         showToast('❌ Failed'); 
     });
 }
