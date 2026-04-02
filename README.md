@@ -1,4 +1,4 @@
-# Stereoscopic 3D Camera Base Calculator  
+# 🎥 Stereoscopic 3D Camera Base Calculator  
 **双机立体拍摄轴距计算器**
 
 [![Website](https://img.shields.io/badge/Website-Online_Calculator-007AFF?style=for-the-badge&logo=google-chrome)](https://zq-moonlight.github.io/Stereoscopic-3D-Camera-Base-Calculator/)
@@ -25,44 +25,18 @@
 
 ---
 
-### 版本更新
+### 主要功能
 
-#### V1（最初版）
-- 实现基础的 Bercovitz 公式计算
-- 输出轴距 (Base) 和简单的像素平移量
-- 手动输入所有参数，无可视化交互
-
-#### V2
-- 增加 1D 空间轨道，支持拖拽 N/S/L 标记点（基础防冲突）
-- 引入后期工程分辨率参数，直接输出像素平移量
-- 增加角视差提示和 Davis 强制约束（L ≥ 2N）
-- 报告生成改用 html2canvas，支持导出参数卡片
-
-#### V3（当前版本）
-- 重构视差预算系统：独立控制正视差上限（% 屏幕宽）、负视差上限、IPD 硬锁
-- 增加角视差二次钳制（输入观众距离、最大角度）
-- 增加辅屏模式，同时计算主屏和辅屏的安全轴距
-- 交互轨道升级：防碰撞自动调整 N/S/L，Davis 保护实时生效
-- 现场联通单内容更完整（包含预算、几何、后期偏移）
-- 视觉海报独立渲染，可导出高清 PNG
-- 增加术语表、拍摄指南面板
-- 支持深色主题、中英文界面切换
-
----
-
-### 基本功能
-
-- 输入 **最近景物距离 (N)**、**零视差面距离 (S)**、**最远景物距离 (L)**
-- 输入 **镜头焦距 (mm)**、**传感器宽度 (mm)**、**放映屏幕宽度 (mm)**
-- 选择或输入 **后期时间线分辨率**（用于计算像素平移量）
-- 输出：
-  - 安全轴距 (mm)
-  - 后期 HIT 像素平移量（左眼/右眼各移多少像素）
-
-附带一个可拖拽的深度示意条，用来直观调整 N / S / L 的位置。  
-另外有一个“辅屏模式”，可以同时计算另一个屏幕（比如电视）对应的轴距。
-
-高级选项里有视差百分比上限、瞳距硬锁、角视差限制等，一般用默认值就够了。
+- **轴距计算**：基于 Bercovitz 公式，输入 N（最近）、S（零视差面）、L（最远）及镜头、传感器、银幕参数，输出安全轴距（mm）。
+- **后期 HIT 平移**：根据时间线分辨率，输出左右眼需要内移的像素量，直接用于 Nuke / DaVinci Resolve。
+- **实际架设反算**：输入现场实际使用的轴距，实时显示当前产生的正视差（入屏）、负视差（出屏）和总视差厚度，并与安全预算对比（超出标红）。
+- **正负视差独立预算**：可分别设置正视差上限（% 银幕宽）、负视差上限（% 银幕宽），以及 IPD 硬锁、角视差二次钳制。
+- **辅屏模式**：同时为主屏（如影院）和辅屏（如电视）计算各自的安全轴距，满足多版本交付。
+- **可拖拽深度轨道**：直观调整 N/S/L 位置，自动防冲突和 Davis 保护。
+- **预设库**：内置常用银幕尺寸、传感器规格（电影机、无反、手机等）、时间线分辨率。
+- **现场联通单**：一键复制纯文本参数单，包含轴距、视差、几何、后期偏移。
+- **视觉海报**：生成 9:16 高清参数卡片，支持导出 PNG。
+- **深色主题 & 中英文界面**。
 
 ---
 
@@ -70,8 +44,8 @@
 
 1. 打开 **[在线计算器](https://zq-moonlight.github.io/Stereoscopic-3D-Camera-Base-Calculator/)**（纯前端，单 HTML 文件）
 2. 按实际情况填写参数
-3. 读取轴距结果，交给摄影组
-4. 读取像素平移量，交给后期合成
+3. 读取“极限安全轴距”，然后用“实际架设轴距”滑块模拟不同轴距下的实际视差
+4. 将最终轴距交给摄影组，像素平移量交给后期合成
 
 ---
 
@@ -84,6 +58,120 @@
 ---
 
 💡 *希望这个工具能帮到还在坚持立体摄影的人。也祝观众的双眼看完片子后还能正常对焦。*
+
+<details>
+<summary>📋 完整更新日志（点击展开）</summary>
+
+## [3.2.0] - 2026-04-02
+
+### Added
+- 核心架构重大升级：引入「现场实际架设轴距 (Applied IA)」的正向推演系统。打破原有“吃干预算”的极限反推模式，支持摄影师通过滑块或输入框手动指定偏好的实际轴距，系统实时计算并可视化对比“实际产生视差”与“极限允许容差”。
+- 新增「总视差预算 (Total Depth)」动态运算，一目了然监控画面总厚度是否超越 2% ~ 3% 的舒适区。
+- 数据海报 (Visual Card) 全面扩容且升级为自适应高度：新增传感器物理宽、时间线分辨率、放大倍率 (M)、瞳距硬锁极限及独立的零视差 (ZPS) 几何展示；未启用辅屏时自动隐藏冗余行。
+- 传感器预设极大丰富：按画幅重构层级，新增 ARRI Alexa 65/35、RED 8K VV/Komodo、Sony VENICE 等顶级数字电影机，并下放支持 iPhone 17/16 Pro 主摄等便携移动端规格。
+
+### Fixed
+- 彻底修复 Davis 保护介入时（最远距离小于最近距离的两倍），用户连续输入键盘数值被强行中断/覆盖的顽固交互 Bug（改为底层运算静默截断+高亮黄字警告）。
+- 修复数据海报重构时意外丢失 vr-hit-px 和 vr-zps DOM 节点引发的 Cannot set properties of null 导致海报无法渲染弹出的严重报错。
+
+## [3.1.0] - 2026-04-02
+
+### Added
+- 引入“双屏协同/多机位 (Main & Secondary Target)”推算模式：支持同时为巨幕主发出版与 TV 电视版计算独立的安全轴距，满足多机位三维剧组的现场需求。
+- 全面实现中英双语 (EN/ZH) 实时无缝切换，覆盖计算器操作界面、一键复制的现场联通单 (Terminal Report) 以及生成的高清数据海报。
+
+### Changed
+- 解除旧版“负视差强行收紧至正视差 50%”的死板锁定，支持摄影师探索更激进的出屏效果。
+- 结果面板逻辑重构：将“唯一最佳轴距”概念纠正为“最大安全轴距 (Max Safe IA)”，并透明化展示推演的瓶颈究竟是入屏还是出屏。
+- 大幅降级“1/30 经验法则”与“轴距空间限度”的视觉层级，移动至下方的诊断分析文本中，防止大银幕精算下对摄影师造成经验性误导。
+
+### Fixed
+- 修复由于移除了冗余“安全区间”展示而引发输入框 ID 丢失，导致 JavaScript 抛出 Cannot read properties of null 阻止引擎启动的致命错误。
+
+## [3.0.1-beta] - 2026-04-02
+
+### Changed
+- 修正核心文案与术语：纠正了界面中将“正视差”错误对应为“出屏”、“负视差”对应为“入屏”的低级翻译混淆。
+
+### Fixed
+- 修复视差预算可视进度条（Budget Bar）由于 1.1 倍溢出倍数导致末端永远留有 9% 灰色空隙的视觉 Bug，现红蓝进度条可完美填满 100% 预算。
+
+## [3.0.0-beta] - 2026-04-02
+
+> ⚠️ 注意：此版本为 Beta 测试版，包含部分已知问题待修复。
+
+### Added
+- 新增“ZPS 双向视差约束引擎”，支持分别独立设定“正视差上限（幕后深度）”与“负视差上限（幕前出屏）”。
+- 新增“生理瞳距硬锁（IPD Hard Lock）”，强制截断超过人类平均瞳距的绝对物理视差，彻底杜绝画面“爆眼”风险。
+- 增加算法瓶颈诊断提示，系统将在计算后自动分析并指出当前限制轴距的因素是前景负视差还是背景正视差。
+
+### Changed
+- 优化“1/30 经验法则”对比模块，智能评估长焦、广角及巨幕环境下的经验法则适用性，提供更专业的调整建议。
+- 重构可视化拖拽轨道的边界碰撞系统，引入“双向推雪机”联动物理引擎，解决特写拖拽时的死区卡死现象。
+
+### Known Issues
+- 极端距离数值输入下（如最远距离极大而最近距离极小），拖拽可视化轨道的“推雪机”联动物理引擎会发生轻微坐标漂移。
+- 移动设备在展开过多折叠面板时，调用高清海报渲染的弹窗偶尔会被底层图层异常遮挡。
+
+## [2.2.0] - 2026-04-01
+
+### Added
+- 新增双模数据输出系统：支持一键复制极简 ASCII 格式现场联通单，以及本地渲染导出 9:16 手机竖屏比例的高清数据海报。
+
+### Changed
+- 升级响应式拟物化 UI 界面，电脑端浏览时将自适应展开为左右双栏高效布局。
+- 优化导出海报图片的默认命名规范，自动抓取镜头焦距、计算轴距与当天的日期戳信息。
+- 全面重绘高级数据卡片中的 8 个核心参数 SVG 矢量图标，大幅提升报告视觉专业度。
+
+### Fixed
+- 修复手机端窄屏幕下，数据卡片导出时底部内容溢出被裁切的问题（引入视口等比缩放引擎解决）。
+- 修复模态弹窗无法通过点击黑色背景空白处关闭的交互体验问题。
+
+## [2.1.0] - 2026-04-01
+
+### Added
+- 新增“后期工程/时间线分辨率”参数输入，可直接推算出后期合成软件中所需的精准左右眼像素平移量（Pixel Shift）。
+- 增加“角视差（Angular Parallax）”自动推演模式，支持基于观众离屏距离与最大允许角度推算物理上限。
+
+### Changed
+- 完善影视设备预设库，更新支持 Alexa 35、RED V-Raptor 等主流数字电影机参数，以及 2K/4K DCI Scope 等工程打包分辨率预设。
+
+## [2.0.0] - 2026-03-31
+
+### Added
+- 全新上线 1D 场景深度可视化预演轨道（Depth Visualizer）。
+- 支持直观拖拽“最近距离(N)”、“主体距离(S)”、“最远距离(L)”圆点标记，底层运算支持 60fps 的参数实时重算与反馈。
+
+### Changed
+- 替换可视化轨道默认的标记圆点，全面采用更直观的 Emoji 图标（🌷 近景、👤 主体、⛰️ 远景）搭配高亮白边设计。
+
+## [1.2.0] - 2026-03-30
+
+### Added
+- 增加家用及专业放映设备尺寸预设，包括 27寸电脑显示器 和 10米标准电影院银幕。
+- 增加移动端与入门拍摄设备传感器预设，包括 iPhone Pro 主摄、安卓一英寸大底及主流微单规格。
+
+### Changed
+- 调整全局默认硬性绝对视差上限为更宽裕的 50mm。
+
+## [1.1.0] - 2026-03-29
+
+### Added
+- 引入 Davis 浅景深强制保护机制选项，当遇到最远距离小于最近距离的两倍（$L < 2N$）时触发钳制介入。
+- 新增后期水平物理位移量（HIT）毫米值的推算功能。
+- 增加工业级拍摄与后期制作概念指南的隐藏折叠面板。
+
+### Fixed
+- 修复并统一底层逻辑，全面摒弃内八字（Toe-in）计算，确立绝对基于平行拍摄（Parallel Rig）与后期裁切的运算基准。
+
+## [1.0.0] - 2026-03-28
+
+### Added
+- 发布基础计算核心，正式提供基于传统 Bercovitz 方程式的 3D 摄像机最佳物理轴距（Base/IA）计算。
+- 提供基于 3% 屏幕宽度限制的全局视差容差计算辅助。
+- 增加智能硬件云台类型建议提示，自动判断现场需使用垂直反射式（Beamsplitter）或并排式（Side-by-Side）云台。
+
+</details>
 
 <br>
 
@@ -108,53 +196,27 @@ So I wrote this from scratch. The formulas are based on existing work (Bercovitz
 
 ---
 
-### Version History
+### Key Features
 
-#### V1 (Initial)
-- Basic Bercovitz formula calculation
-- Outputs camera base and simple pixel shift
-- All parameters manually entered, no visualization
-
-#### V2
-- Added 1D spatial track with draggable N/S/L markers (basic collision prevention)
-- Introduced timeline resolution parameter for pixel shift calculation
-- Added angular parallax hint and Davis clamp (L ≥ 2N)
-- Upgraded report generation with html2canvas for exporting parameter cards
-
-#### V3 (Current)
-- Refactored parallax budget: independent positive/negative limits (% screen width), IPD hard lock
-- Added angular parallax secondary clamp (viewing distance + max angle)
-- Added secondary target mode: calculates safe IA for both main and secondary screens simultaneously
-- Enhanced interactive track: auto‑adjust N/S/L with collision avoidance, real‑time Davis enforcement
-- More complete on‑set report (budget, geometry, post shift)
-- Standalone visual poster rendering, exportable as high‑res PNG
-- Added glossary and shooting guide panels
-- Dark theme and bilingual UI (Chinese/English)
+- **IA calculation** – Bercovitz formula, outputs safe interaxial (mm) from N/S/L, lens, sensor, screen.
+- **HIT pixel shift** – Pixel shift per eye based on timeline resolution, for Nuke/DaVinci Resolve.
+- **Applied IA with real‑time feedback** – Enter actual base used on set; see actual positive/negative/total parallax compared to safe limits (red if exceeded).
+- **Independent positive/negative budgets** – Set positive limit (% screen width), negative limit (% screen width), IPD hard cap, angular parallax clamp.
+- **Secondary target mode** – Calculate separate safe IA for a second screen (e.g., TV).
+- **Draggable depth track** – Adjust N/S/L visually with auto‑collision avoidance and Davis enforcement.
+- **Presets** – Common screen sizes, sensor types (cinema, mirrorless, mobile), timeline resolutions.
+- **On‑set report** – One‑click copy of a plain‑text parameter slate.
+- **Visual poster** – 9:16 HD parameter card, exportable as PNG.
+- **Dark theme & bilingual UI**.
 
 ---
 
-### Basic features
-
-- Input **Near (N)**、**Zero Parallax Plane (S)**、**Far (L)**
-- Input **focal length (mm)**、**sensor width (mm)**、**screen width (mm)**
-- Input or select **timeline resolution** (for pixel shift calculation)
-- Output:
-  - Safe interaxial distance (mm)
-  - HIT pixel shift (how many pixels to shift left/right eye)
-
-A draggable depth bar helps adjust N/S/L visually.  
-There’s also a “secondary target” mode for calculating IA for another screen (e.g., TV).
-
-Advanced options (parallax percentage limits, IPD hard cap, angular parallax) are available — default values work for most cases.
-
----
-
-### How to use
+### How to Use
 
 1. Open the **[online calculator](https://zq-moonlight.github.io/Stereoscopic-3D-Camera-Base-Calculator/)** (pure frontend, single HTML)
 2. Fill in parameters
-3. Give the IA result to the camera crew
-4. Give the pixel shift to the post team
+3. Read the “Max Safe IA”, then use the “Applied IA” slider to simulate actual parallax at different bases
+4. Give the final IA to the camera crew and the pixel shift to the post team
 
 ---
 
@@ -167,3 +229,121 @@ This project is licensed under AGPL v3.
 ---
 
 💡 *Hope this helps the few people still shooting stereoscopic. And may your audience’s eyes stay comfortably converged after watching your film.*
+
+<details>
+<summary>📋 Full Changelog (click to expand)</summary>
+
+## [3.2.0] - 2026-04-02
+
+### Added
+- Major architecture upgrade: Introduced "Applied IA" forward calculation system. Cinematographers can now manually input the actual base used on set via slider or number input, with real‑time visualization comparing actual parallax against safety limits.
+- Added dynamic "Total Depth" calculation to monitor whether the total parallax exceeds the 2%–3% comfort zone.
+- Visual card now fully expanded and auto‑height: added sensor width, timeline resolution, magnification (M), IPD hard limit, and independent ZPS geometry display; secondary target rows auto‑hide when not enabled.
+- Greatly expanded sensor presets: reorganized by format, added ARRI Alexa 65/35, RED 8K VV/Komodo, Sony VENICE, plus mobile options like iPhone 17/16 Pro main camera.
+
+### Fixed
+- Fixed the long‑standing Davis rule bug that interrupted continuous keyboard input (now uses silent truncation + highlighted warning).
+- Fixed missing DOM nodes (vr-hit-px, vr-zps) causing `Cannot set properties of null` error and preventing poster rendering.
+
+## [3.1.0] - 2026-04-02
+
+### Added
+- Added "Main & Secondary Target" dual‑screen mode: calculates independent safe IAs for cinema main release and TV secondary release simultaneously.
+- Full bilingual (EN/ZH) real‑time switching, covering UI, on‑set terminal report, and exported visual poster.
+
+### Changed
+- Removed the rigid "negative parallax forced to 50% of positive" constraint, allowing more aggressive pop‑out effects.
+- Renamed "Optimal Base" to "Max Safe IA" and transparently shows which bottleneck (positive or negative) limits the result.
+- Demoted the "1/30 rule" and "IA space limits" to the analysis text area to avoid misleading on large screens.
+
+### Fixed
+- Fixed missing input field IDs after removing the old "safety zone" display, which prevented the engine from starting.
+
+## [3.0.1-beta] - 2026-04-02
+
+### Changed
+- Fixed terminology confusion: corrected swapped "positive/negative parallax" labels in the UI.
+
+### Fixed
+- Fixed budget bar visual bug where a 9% grey gap remained at the end due to a 1.1× overflow multiplier.
+
+## [3.0.0-beta] - 2026-04-02
+
+> ⚠️ Note: Beta release with known issues.
+
+### Added
+- Added "ZPS dual‑direction parallax constraint engine" – independent positive (behind screen) and negative (in front of screen) limits.
+- Added "IPD Hard Lock" – caps physical parallax at the average human interpupillary distance to prevent eye divergence.
+- Added algorithm bottleneck diagnosis – automatically indicates whether foreground negative or background positive parallax limits the IA.
+
+### Changed
+- Improved "1/30 rule" comparison module – intelligently evaluates its applicability for telephoto, wide‑angle, and large‑screen scenarios.
+- Refactored drag‑and‑drop collision system with a "bidirectional snowplow" physics engine to eliminate dead zones during close‑up dragging.
+
+### Known Issues
+- Minor coordinate drift in the drag physics engine under extreme N/S/L values.
+- On mobile devices, the poster rendering modal may be occluded when many accordion panels are expanded.
+
+## [2.2.0] - 2026-04-01
+
+### Added
+- Dual‑mode data output: one‑click copy of ASCII on‑set slate and local export of 9:16 HD data poster.
+
+### Changed
+- Responsive UI now switches to two‑column layout on desktop.
+- Exported poster filename includes focal length, IA, and date.
+- Redesigned 8 core parameter SVG icons for better visual professionalism.
+
+### Fixed
+- Fixed poster cropping on narrow mobile screens (viewport scaling engine).
+- Fixed modal not closing when tapping on background overlay.
+
+## [2.1.0] - 2026-04-01
+
+### Added
+- Added "Timeline Resolution" parameter to calculate exact pixel shift for post‑production.
+- Added "Angular Parallax" mode – calculates physical limits based on viewing distance and max allowable angle.
+
+### Changed
+- Expanded cinema camera presets (Alexa 35, RED V-Raptor) and delivery resolutions (2K/4K DCI Scope).
+
+## [2.0.0] - 2026-03-31
+
+### Added
+- Added 1D depth visualizer track.
+- Draggable markers for Near (N), Subject (S), Far (L) with 60fps real‑time feedback.
+
+### Changed
+- Replaced markers with intuitive emoji icons (🌷 Near, 👤 Subject, ⛰️ Far) and white borders.
+
+## [1.2.0] - 2026-03-30
+
+### Added
+- Added home/professional screen presets (27" monitor, 10m cinema screen).
+- Added mobile sensor presets (iPhone Pro main camera, 1‑inch type, mainstream mirrorless).
+
+### Changed
+- Default absolute parallax cap increased to 50mm.
+
+## [1.1.0] - 2026-03-29
+
+### Added
+- Added Davis shallow depth‑of‑field protection (enforces L ≥ 2N).
+- Added HIT physical shift (mm) calculation.
+- Added hidden accordion panel for production/post guidelines.
+
+### Fixed
+- Unified calculation logic – fully switched to parallel rig (no toe‑in) with post‑cropping.
+
+## [1.0.0] - 2026-03-28
+
+### Added
+- Initial release: Bercovitz‑based IA calculation.
+- 3% screen‑width global parallax tolerance helper.
+- Smart rig type suggestion (beamsplitter vs. side‑by‑side).
+
+</details>
+
+<br>
+
+---
