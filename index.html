@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!--
+        🎥 Stereoscopic 3D Camera Base Calculator
+        双机立体拍摄最佳轴距计算器
+
+        Copyright (C) 2024-2026 zq-moonlight
+        All rights reserved for the original work.
+
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Affero General Public License as published
+        by the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+        GNU Affero General Public License for more details.
+
+        You should have received a copy of the GNU Affero General Public License
+        along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+        本工具采用 GNU AGPLv3 许可证发布。
+        任何修改、分发或通过网络提供服务的使用，必须公开修改后的完整源代码。
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D立体摄影轴距计算器 Pro</title>
@@ -132,12 +155,15 @@
 
         .budget-bar-wrap { margin-top: 10px; }
         .budget-bar-bg {
-            height: 8px; background: var(--border); border-radius: 4px;
-            overflow: hidden; display: flex;
+            height: 12px; background: transparent; border-radius: 6px;
+            display: flex; gap: 4px;
         }
-        .budget-bar-pos { background: var(--primary); height: 100%; transition: width 0.3s; }
-        .budget-bar-neg { background: var(--danger); height: 100%; transition: width 0.3s; }
-        .budget-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--label); margin-top: 4px; }
+        .limit-wrap-pos { background: rgba(0,122,255,0.15); border-radius: 6px 0 0 6px; position: relative; overflow: hidden; display: flex; justify-content: flex-end; }
+        .limit-wrap-neg { background: rgba(255,59,48,0.15); border-radius: 0 6px 6px 0; position: relative; overflow: hidden; display: flex; justify-content: flex-start; }
+        .fill-pos { background: var(--primary); height: 100%; transition: width 0.3s; }
+        .fill-neg { background: var(--danger); height: 100%; transition: width 0.3s; }
+        .budget-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--label); margin-top: 6px; }
+        .actual-labels { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
 
         .visualizer-section { background: var(--adv-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 16px; }
         .visualizer-container { position: relative; height: 68px; margin-top: 12px; touch-action: pan-y; user-select: none; }
@@ -212,17 +238,17 @@
             background: #151517;
             background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
             background-size: 20px 20px;
-            color: #fff; width: 450px; height: 800px; flex-shrink: 0;
+            color: #fff; width: 450px; height: auto; min-height: 800px; flex-shrink: 0;
             transform-origin: top center; border-radius: 22px; overflow: hidden;
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.09);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; padding-bottom: 24px;
         }
         .rc-header { background: linear-gradient(135deg, #005bb5, #001a33); padding: 24px; flex-shrink: 0; }
         .rc-title { font-size: 1.35rem; font-weight: 800; margin: 0; color: #fff; }
         .rc-subtitle { font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-top: 5px; text-transform: uppercase; letter-spacing: 2px; }
-        .rc-body { padding: 18px 24px; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
+        .rc-body { padding: 18px 24px 0 24px; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; gap: 12px;}
         .rc-section-title { font-size: 0.78rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 5px; }
         .rc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
         .rc-item { display: flex; align-items: center; background: rgba(255,255,255,0.04); padding: 10px 11px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.05); }
@@ -318,15 +344,33 @@
                     <label><span data-zh="传感器有效宽度 (mm)" data-en="Sensor Width (mm)">传感器有效宽度 (mm)</span></label>
                     <select id="sensorPreset" class="preset-select" onchange="updateSensorInput()">
                         <option value="custom" data-zh="— 自定义 —" data-en="— Custom —">— 自定义 —</option>
-                        <optgroup label="专业电影机">
-                            <option value="54.1">Alexa 65 — 54.1 mm</option>
-                            <option value="36.0" selected>Alexa LF / 全画幅 — 36.0 mm</option>
-                            <option value="28.17">ARRI ALEXA 35 — 28.17 mm</option>
-                            <option value="24.9">Super 35 (S35) — 24.9 mm</option>
-                            <option value="23.6">APS-C (Sony FX30) — 23.6 mm</option>
+                        <optgroup label="电影机 - 大画幅 (Large Format/65mm)">
+                            <option value="54.1">ARRI Alexa 65 — 54.1 mm</option>
+                            <option value="40.96">RED V-Raptor / Monstro 8K VV — 41.0 mm</option>
+                            <option value="36.7">ARRI Alexa LF / Mini LF — 36.7 mm</option>
+                            <option value="36.0">Sony VENICE 1/2 全画幅 — 36.0 mm</option>
+                        </optgroup>
+                        <optgroup label="电影机 - Super 35">
+                            <option value="27.99">ARRI ALEXA 35 — 28.0 mm</option>
+                            <option value="27.03">RED Komodo 6K — 27.0 mm</option>
+                            <option value="24.9">标准 Super 35 (通用) — 24.9 mm</option>
+                            <option value="23.76">ARRI Alexa Mini / Amira — 23.8 mm</option>
+                        </optgroup>
+                        <optgroup label="无反相机 - 全画幅 (Full Frame)">
+                            <option value="36.0" selected>Canon R5/R5C / Lumix S1H — 36.0 mm</option>
+                            <option value="35.9">Sony A7S3/FX3 / Nikon Z9 — 35.9 mm</option>
+                        </optgroup>
+                        <optgroup label="无反 APS-C & M4/3">
+                            <option value="23.3">Sony FX30 / A6700 — 23.3 mm</option>
+                            <option value="22.3">Canon R7 / C70 — 22.3 mm</option>
+                            <option value="17.3">Panasonic GH6 (M4/3) — 17.3 mm</option>
+                        </optgroup>
+                        <optgroup label="便携 / 移动端 (Mobile/Other)">
+                            <option value="13.2">1英寸底 (大疆无人机/卡片机) — 13.2 mm</option>
+                            <option value="9.8">iPhone 17/16 Pro 主摄 — 9.8 mm</option>
                         </optgroup>
                     </select>
-                    <input type="number" id="sensorWidth" value="36" step="0.1" oninput="checkSensorInput()">
+                    <input type="number" id="sensorWidth" value="36.0" step="0.1" oninput="checkSensorInput()">
                 </div>
                 <div class="form-group">
                     <label><span data-zh="镜头焦距 F (mm)" data-en="Focal Length F (mm)">镜头焦距 F (mm)</span></label>
@@ -361,7 +405,7 @@
                 <div class="form-group" style="margin-bottom:4px">
                     <label><span data-zh="⛰️ 最远景物 L (米)" data-en="⛰️ Far Distance L (m)">⛰️ 最远景物 L (米)</span><span class="en">Far Background (背景)</span></label>
                     <input type="number" id="largestDist" value="10" step="0.1" oninput="calculate()">
-                    <div id="davisAlert">⚠ Davis 保护已介入：已强制截断 L≥2N，防止背景正视差过大导致眼睛无法融合</div>
+                    <div id="davisAlert">⚠ Davis 保护已介入：为防止背景超限，推演已强制使用内部安全值。</div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="isInfinity" onchange="toggleInfinity()">
                         <label for="isInfinity" data-zh="背景无限远 ∞" data-en="Background Infinity ∞">背景无限远 ∞</label>
@@ -391,7 +435,7 @@
                     </div>
                     <div class="form-group">
                         <label><span data-zh="硬锁 IPD 瞳距上限 (mm)" data-en="Hard Limit IPD (mm)">硬锁 IPD 瞳距上限 (mm)</span><span class="en" data-zh="绝对不可超出此值，防爆眼" data-en="Never exceed this. Typical: 60">绝对不可超出此值，防爆眼</span></label>
-                        <input type="number" id="ipdLimit" value="60.0" step="0.1" oninput="calculate()">
+                        <input type="number" id="ipdLimit" value="50.0" step="0.1" oninput="calculate()">
                     </div>
                 </div>
                 <div class="checkbox-group" style="margin-bottom:8px">
@@ -444,8 +488,17 @@
             <!-- 主结果 -->
             <div class="result-box">
                 <div class="result-main">
-                    <div><span class="result-num" id="resBase">0.00</span><span class="result-unit">mm</span></div>
-                    <div class="result-label" data-zh="主屏最大安全轴距 (Main Max Safe IA)" data-en="Main Max Safe Camera Base (IA)">主屏最大安全轴距 (Main Max Safe IA)</div>
+                    <div class="result-label" data-zh="极限安全轴距 (Max Safe IA)" data-en="Max Safe Camera Base (IA)">极限安全轴距 (Max Safe IA)</div>
+                    <div><span class="result-num" id="resMaxBase" style="font-size: 1.6rem; color: var(--label);">0.00</span><span class="result-unit">mm</span></div>
+                    
+                    <div style="margin-top: 14px; padding: 16px; background: var(--card); border: 2px solid var(--primary); border-radius: 14px; box-shadow: 0 4px 12px rgba(0,122,255,0.15);">
+                        <div class="result-label" style="color: var(--primary); font-weight: 800; font-size: 0.95rem; margin-bottom: 12px;">🎬 <span data-zh="现场实际架设轴距 (Applied IA)" data-en="Applied IA (Actual Base)">现场实际架设轴距 (Applied IA)</span></div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                            <input type="range" id="appliedIASlider" min="0" max="200" step="0.1" value="0" style="flex:1; accent-color: var(--primary);" oninput="document.getElementById('appliedIAInput').value=this.value; updateActuals();">
+                            <input type="number" id="appliedIAInput" value="0.00" step="0.1" style="width: 90px; text-align: center; font-size: 1.5rem; font-weight: 900; color: var(--primary); background: transparent; border: none; border-bottom: 2px solid var(--border); border-radius: 0; padding: 2px;" oninput="document.getElementById('appliedIASlider').value=this.value; updateActuals();">
+                            <span class="result-unit" style="font-weight: 700; color: var(--text);">mm</span>
+                        </div>
+                    </div>
                     
                     <div id="resSecWrap" style="display:none; margin-top: 14px; background: rgba(255,255,255,0.3); padding: 8px; border-radius: 8px;">
                         <span style="font-size: 1.4rem; font-weight: 800; color: var(--primary);" id="resBaseSec">0.00</span><span class="result-unit" style="font-size: 0.8rem;">mm</span>
@@ -455,13 +508,18 @@
 
                 <!-- 视差预算可视条 -->
                 <div class="budget-bar-wrap">
+                    <div class="actual-labels">
+                        <span style="color:var(--primary)"><span data-zh="实际入屏:" data-en="Act Pos:">实际入屏:</span> <span id="actPosVal">0.0</span> mm</span>
+                        <span style="color:var(--text); font-size:0.75rem;"><span data-zh="总视差(厚度):" data-en="Total Depth:">总视差(厚度):</span> <span id="actTotalVal">0.0</span> mm</span>
+                        <span style="color:var(--danger)"><span data-zh="实际出屏:" data-en="Act Neg:">实际出屏:</span> <span id="actNegVal">0.0</span> mm</span>
+                    </div>
                     <div class="budget-bar-bg">
-                        <div class="budget-bar-pos" id="barPos" style="width:60%"></div>
-                        <div class="budget-bar-neg" id="barNeg" style="width:40%"></div>
+                        <div class="limit-wrap-pos" id="wrapPos" style="width:50%"><div class="fill-pos" id="fillPos" style="width:0%"></div></div>
+                        <div class="limit-wrap-neg" id="wrapNeg" style="width:50%"><div class="fill-neg" id="fillNeg" style="width:0%"></div></div>
                     </div>
                     <div class="budget-labels">
-                        <span id="barLabelPos" style="color:var(--primary)">正视差(背景) 0 mm</span>
-                        <span id="barLabelNeg" style="color:var(--danger)">负视差(前景) 0 mm</span>
+                        <span><span data-zh="正极限" data-en="Pos Lim">正极限</span> <span id="limPosVal">0</span> mm</span>
+                        <span><span data-zh="负极限" data-en="Neg Lim">负极限</span> <span id="limNegVal">0</span> mm</span>
                     </div>
                 </div>
 
@@ -499,6 +557,7 @@
             </button>
             <div class="accordion-content" id="visualCardPanel" style="padding-left:0; padding-right:0;">
                 <div class="report-card-wrapper" id="cardWrapper">
+                    <!-- 海报高度变为自适应，解除固定的800px限制 -->
                     <div class="report-card" id="visualCardNode">
                         <div class="rc-header">
                             <div class="rc-title" data-zh="3D 立体参数海报" data-en="STEREOSCOPIC DATA">STEREOSCOPIC DATA</div>
@@ -508,30 +567,50 @@
                             <div class="rc-final-box">
                                 <div class="rc-final-label" data-zh="主屏最大轴距 OPTIMAL BASE (IA)" data-en="OPTIMAL BASE (IA)">主屏最大轴距 OPTIMAL BASE (IA)</div>
                                 <div class="rc-final-value" id="vr-base">0.00 mm</div>
+                                <!-- 辅屏轴距显示容器 -->
                                 <div class="rc-final-sub" id="vr-sec-base" style="color:#34c759; font-weight: 600;">Sec IA: N/A</div>
                             </div>
-                            <div class="rc-section-title" data-zh="主屏视差预算 Parallax Budget" data-en="MAIN PARALLAX BUDGET">主屏视差预算 Parallax Budget</div>
-                            <div class="rc-grid">
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M21 3v6M21 3h-6M21 3l-7 7M3 21v-6M3 21h6M3 21l7-7"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="正上限 Max Pos." data-en="Max Positive">正上限 Max Pos.</span><span class="rc-value" id="vr-pos">0 mm</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M4 14v7h7M4 21l7-7M20 10V3h-7M20 3l-7 7"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="负上限 Max Neg." data-en="Max Negative">负上限 Max Neg.</span><span class="rc-value" id="vr-neg">0 mm</span></div>
-                                </div>
-                            </div>
-                            <div class="rc-section-title" data-zh="硬件与放映 Hardware" data-en="HARDWARE">硬件与放映 Hardware</div>
+                            
+                            <div class="rc-section-title" data-zh="硬件与系统 Hardware & System" data-en="HARDWARE & SYSTEM">硬件与系统 Hardware & System</div>
                             <div class="rc-grid">
                                 <div class="rc-item">
                                     <svg class="rc-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
                                     <div class="rc-data-col"><span class="rc-label-small" data-zh="主屏宽 Main Screen" data-en="Main Screen">主屏宽 Main Screen</span><span class="rc-value" id="vr-screen">0 mm</span></div>
                                 </div>
                                 <div class="rc-item">
+                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="传感器 Sensor" data-en="Sensor Width">传感器 Sensor</span><span class="rc-value" id="vr-sensor">0 mm</span></div>
+                                </div>
+                                <div class="rc-item">
                                     <svg class="rc-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                                     <div class="rc-data-col"><span class="rc-label-small" data-zh="焦距 Focal L." data-en="Focal Length">焦距 Focal L.</span><span class="rc-value" id="vr-focal">0 mm</span></div>
                                 </div>
+                                <div class="rc-item">
+                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="放大倍率 Mag. (M)" data-en="Magnification (M)">放大倍率 Mag. (M)</span><span class="rc-value" id="vr-mag">0x</span></div>
+                                </div>
+                                <div class="rc-item">
+                                    <svg class="rc-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="时间线 Timeline" data-en="Timeline Res">时间线 Timeline</span><span class="rc-value" id="vr-res">0 px</span></div>
+                                </div>
+                                <div class="rc-item">
+                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="瞳距极限 IPD Limit" data-en="IPD Limit">瞳距极限 IPD Limit</span><span class="rc-value" id="vr-ipd">0 mm</span></div>
+                                </div>
                             </div>
+
+                            <div class="rc-section-title" data-zh="主屏视差预算 Parallax Budget" data-en="MAIN PARALLAX BUDGET">主屏视差预算 Parallax Budget</div>
+                            <div class="rc-grid">
+                                <div class="rc-item">
+                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M21 3v6M21 3h-6M21 3l-7 7M3 21v-6M3 21h6M3 21l7-7"/></svg>
+                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="实际入屏 Act Pos." data-en="Actual Positive">实际入屏 Act Pos.</span><span class="rc-value" id="vr-pos">0 mm</span><span style="font-size:0.65rem; color:#888;" id="vr-pos-lim">Lim: 0</span></div>
+                                </div>
+                                <div class="rc-item">
+                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M4 14v7h7M4 21l7-7M20 10V3h-7M20 3l-7 7"/></svg>
+                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="实际出屏 Act Neg." data-en="Actual Negative">实际出屏 Act Neg.</span><span class="rc-value" id="vr-neg">0 mm</span><span style="font-size:0.65rem; color:#888;" id="vr-neg-lim">Lim: 0</span></div>
+                                </div>
+                            </div>
+                            
                             <div class="rc-section-title" data-zh="深度几何 N–S–L" data-en="DEPTH GEOMETRY">深度几何 N–S–L</div>
                             <div class="rc-grid">
                                 <div class="rc-item">
@@ -539,14 +618,23 @@
                                     <div class="rc-data-col"><span class="rc-label-small" data-zh="最近 Near N" data-en="Near (N)">最近 Near N</span><span class="rc-value" id="vr-n">0 m</span></div>
                                 </div>
                                 <div class="rc-item">
+                                    <svg class="rc-icon" style="stroke:#0a84ff" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="零视差 ZPS S" data-en="ZPS (S)">零视差 ZPS S</span><span class="rc-value" id="vr-zps-geom">0 m</span></div>
+                                </div>
+                                <div class="rc-item">
                                     <svg class="rc-icon" style="stroke:#34c759" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
                                     <div class="rc-data-col"><span class="rc-label-small" data-zh="最远 Far L" data-en="Far (L)">最远 Far L</span><span class="rc-value" id="vr-l">0 m</span></div>
                                 </div>
+                                <div class="rc-item">
+                                    <svg class="rc-icon" style="stroke:#ff9f0a" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="1/30参考 Ref" data-en="1/30 Rule Ref">1/30参考 Ref</span><span class="rc-value" id="vr-one-thirty">0 mm</span></div>
+                                </div>
                             </div>
+
                             <div class="rc-section-title" id="vr-bottleneck-title">后期合成 Post Shift</div>
                             <div class="rc-hit-box">
                                 <div>
-                                    <div style="font-size:0.72rem; color:#aaa; margin-bottom:4px;">ZPS <span id="vr-zps">0m</span> · HIT <span id="vr-hit-mm" style="color:#fff; font-weight:700;">0.000mm</span></div>
+                                    <div style="font-size:0.72rem; color:#aaa; margin-bottom:4px;"><span data-zh="主体回拉 HIT 平移" data-en="HIT Physical Shift">主体回拉 HIT 平移</span> <span id="vr-hit-mm" style="color:#fff; font-weight:700;">0.000mm</span></div>
                                     <div style="font-size:0.85rem; color:#eee;" id="vr-shift">L→0px | R←0px</div>
                                 </div>
                                 <div class="rc-hit-val" id="vr-hit-px">0 px</div>
@@ -570,6 +658,11 @@
                 <div class="glossary-item">
                     <div class="glossary-term">轴距 IA (Interaxial Distance)</div>
                     <div class="glossary-def">两摄影机镜头光轴之间的物理水平距离，即"立体基线"。IA 越大立体感越强，但超限则导致视觉疲劳或爆眼。</div>
+                </div>
+                <div class="glossary-item">
+                    <div class="glossary-term">总视差预算 (Total Parallax Budget / Depth Range)</div>
+                    <div class="glossary-def">正视差与负视差绝对值之和，代表整个场景在屏幕上呈现的 3D 厚度空间。行业（如 Sky 3D 规范）建议总视差尽量控制在屏幕宽度的 <b>2% ~ 3%</b> 以内，避免让观众的眼球在远近之间来回剧烈调焦引发疲劳。</div>
+                    <div class="glossary-formula">P_total = P_pos + P_neg = B × F × M × (1/N - 1/L)</div>
                 </div>
                 <div class="glossary-item">
                     <div class="glossary-term">零视差面 ZPS (Zero Parallax Plane / Screen Plane)</div>
@@ -646,7 +739,7 @@
 /* ============================================================
    全局状态
 ============================================================ */
-let globalData = { base:'0.00', secBase:'0.00', hitMm:'0.000', hitPx:'0', halfPx:'0', isValid:false };
+let globalData = { base:'0.00', secBase:'0.00', hitMm:'0.000', hitPx:'0', halfPx:'0', oneThirty:'0.00', isValid:false };
 let isDraggingVis = false, dragMaxDist = 10, activeMarkerConfig = null;
 let currentLang = 'zh';
 
@@ -779,7 +872,9 @@ function calculate() {
     const F    = parseFloat(document.getElementById('focalLength').value)   || 0;
     const S    = (parseFloat(document.getElementById('subjectDist').value)  || 0) * 1000;
     const N    = (parseFloat(document.getElementById('nearestDist').value)  || 0) * 1000;
-    let   L    = (parseFloat(document.getElementById('largestDist').value)  || 0) * 1000;
+    // 不在此处直接覆盖 L 的输入框值，避免打断用户的连续键盘输入 (修复 Davis Bug)
+    const L_input = parseFloat(document.getElementById('largestDist').value) || 0; 
+    let L = L_input * 1000;
     
     const isInf = document.getElementById('isInfinity').checked;
     const useDavis = document.getElementById('useDavis').checked;
@@ -814,10 +909,18 @@ function calculate() {
     if (!isInf) {
         if (useDavis && actualL < 2 * N) {
             actualL = 2 * N;
-            document.getElementById('largestDist').value = (actualL / 1000).toFixed(1);
+            // 修复：仅在底层逻辑使用安全的 actualL，不强行覆盖 input.value，通过提示语告知用户。
+            const davisHtml = isZH ? 
+                `⚠ Davis 保护已介入：为防背景超限，底层推演已强制使用安全截断值 <b>L = ${(actualL/1000).toFixed(1)}m</b>` : 
+                `⚠ Davis Rule active: Using safe minimum <b>L = ${(actualL/1000).toFixed(1)}m</b> for math.`;
+            document.getElementById('davisAlert').innerHTML = davisHtml;
             document.getElementById('davisAlert').style.display = 'block';
+        } else {
+            document.getElementById('davisAlert').style.display = 'none';
         }
         if (actualL <= S) { renderInvalid(isZH ? '逻辑错误：最远景 L 必须大于零视差面 S (L > S)' : 'Error: Far distance L must be greater than ZPS S (L > S)'); return; }
+    } else {
+        document.getElementById('davisAlert').style.display = 'none';
     }
 
     // 主屏推算
@@ -847,58 +950,110 @@ function calculate() {
     // 降级 1/30
     const oneThirty = S / 30; // mm
 
-    const hitMm = (F * B) / S;
+    globalData.isValid = true;
+    globalData.maxBase = B;
+    globalData.secBase = useSec ? B2.toFixed(2) : 'N/A';
+    globalData.oneThirty = oneThirty.toFixed(2);
+    globalData.limPos = lim.pos;
+    globalData.limNeg = lim.neg;
+    
+    // Set slider max to slightly above the max base, or at least 150
+    const sliderMax = Math.max(150, Math.ceil(B * 1.5));
+    document.getElementById('appliedIASlider').max = sliderMax;
+
+    // Auto-link applied IA to Max Safe IA when geometry changes
+    document.getElementById('appliedIAInput').value = B.toFixed(2);
+    document.getElementById('appliedIASlider').value = B.toFixed(2);
+
+    updateActuals();
+}
+
+function updateActuals() {
+    const isZH = currentLang === 'zh';
+    const appliedB = parseFloat(document.getElementById('appliedIAInput').value) || 0;
+    globalData.base = appliedB.toFixed(2);
+    
+    const sw   = parseFloat(document.getElementById('screenWidth').value)  || 0;
+    const senW = parseFloat(document.getElementById('sensorWidth').value)   || 0;
+    const res  = parseFloat(document.getElementById('sensorRes').value)     || 0;
+    const F    = parseFloat(document.getElementById('focalLength').value)   || 0;
+    const S    = (parseFloat(document.getElementById('subjectDist').value)  || 0) * 1000;
+    const N    = (parseFloat(document.getElementById('nearestDist').value)  || 0) * 1000;
+    
+    const L_input = parseFloat(document.getElementById('largestDist').value) || 0; 
+    let actualL = L_input * 1000;
+    const isInf = document.getElementById('isInfinity').checked;
+    const useDavis = document.getElementById('useDavis').checked;
+    if (!isInf && useDavis && actualL < 2 * N) actualL = 2 * N;
+    
+    const M = sw / senW;
+    
+    // 正向计算实际视差 Actual Parallax calculation based on applied Base
+    const actualPos = isInf ? appliedB * F * M * (1/S) : appliedB * F * M * (1/S - 1/actualL);
+    const actualNeg = appliedB * F * M * (1/N - 1/S);
+    const actualTotal = actualPos + actualNeg;
+
+    const hitMm = (F * appliedB) / S;
     const hitPx = (senW > 0 && res > 0) ? Math.round((hitMm / senW) * res) : 0;
     const halfPx = Math.round(hitPx / 2);
 
-    globalData = {
-        isValid: true,
-        base: B.toFixed(2),
-        secBase: useSec ? B2.toFixed(2) : 'N/A',
-        hitMm: hitMm.toFixed(3),
-        hitPx: hitPx.toString(),
-        halfPx: halfPx.toString()
-    };
+    globalData.hitMm = hitMm.toFixed(3);
+    globalData.hitPx = hitPx.toString();
+    globalData.halfPx = halfPx.toString();
 
-    // 绘制主屏预算条
-    const totalBudget = lim.pos + lim.neg;
-    const posW = totalBudget > 0 ? (lim.pos / totalBudget * 100).toFixed(1) : 50;
-    const negW = totalBudget > 0 ? (lim.neg / totalBudget * 100).toFixed(1) : 50;
-    document.getElementById('barPos').style.width = posW + '%';
-    document.getElementById('barNeg').style.width = negW + '%';
-    document.getElementById('barLabelPos').textContent = isZH ? `正视差(背景) ${lim.pos.toFixed(1)} mm` : `Pos (Bg) ${lim.pos.toFixed(1)} mm`;
-    document.getElementById('barLabelNeg').textContent = isZH ? `负视差(前景) ${lim.neg.toFixed(1)} mm` : `Neg (Fg) ${lim.neg.toFixed(1)} mm`;
+    // 更新 DOM
+    document.getElementById('resMaxBase').textContent = globalData.maxBase.toFixed(2);
+    if (document.getElementById('useSecScreen').checked) {
+        document.getElementById('resBaseSec').textContent = globalData.secBase;
+    }
 
-    // 填充结果面板
-    document.getElementById('resBase').textContent = globalData.base;
-    if (useSec) document.getElementById('resBaseSec').textContent = globalData.secBase;
+    document.getElementById('actPosVal').textContent = actualPos.toFixed(1);
+    document.getElementById('actNegVal').textContent = actualNeg.toFixed(1);
+    document.getElementById('actTotalVal').textContent = actualTotal.toFixed(1);
+    document.getElementById('limPosVal').textContent = globalData.limPos.toFixed(1);
+    document.getElementById('limNegVal').textContent = globalData.limNeg.toFixed(1);
+
+    const totalLim = globalData.limPos + globalData.limNeg;
+    if (totalLim > 0) {
+        document.getElementById('wrapPos').style.width = (globalData.limPos / totalLim * 100) + '%';
+        document.getElementById('wrapNeg').style.width = (globalData.limNeg / totalLim * 100) + '%';
+    }
+    
+    document.getElementById('fillPos').style.width = Math.min(100, (actualPos / globalData.limPos * 100)) + '%';
+    document.getElementById('fillNeg').style.width = Math.min(100, (actualNeg / globalData.limNeg * 100)) + '%';
+    
+    // 超限警告色 Warning Colors
+    document.getElementById('actPosVal').style.color = actualPos > globalData.limPos ? 'var(--danger)' : 'var(--primary)';
+    document.getElementById('fillPos').style.background = actualPos > globalData.limPos ? 'var(--danger)' : 'var(--primary)';
+    document.getElementById('actNegVal').style.color = actualNeg > globalData.limNeg ? '#8b0000' : 'var(--danger)'; 
     
     document.getElementById('resHitMm').textContent = hitMm.toFixed(3) + ' mm';
     document.getElementById('resHitPx').textContent = halfPx + (isZH ? ' px/眼' : ' px/eye');
 
-    // 降级的分析文本
     let bottleneckInfo = isZH ? 
-        `<b>空间限度推演</b>: 入屏最大允许 ${bPosStr}mm | 出屏最大允许 ${bNegStr}mm。<br>
-        <b>1/30法则参考</b>: ${oneThirty.toFixed(2)} mm (注: 大银幕下精准光学推演值必然远小于经验法则)` : 
-        `<b>IA Space Limits</b>: Max for Positive ${bPosStr}mm | Max for Negative ${bNegStr}mm.<br>
-        <b>1/30 Rule Ref</b>: ${oneThirty.toFixed(2)} mm (Note: Optical limits for large screens are naturally stricter than the 1/30 rule)`;
+        `<b>现场推演分析</b>: 极限计算中，入屏最大允许 ${globalData.limPos.toFixed(1)}mm，出屏最大允许 ${globalData.limNeg.toFixed(1)}mm。<br>
+        在您设定的实际轴距 <b>${globalData.base}mm</b> 下，产生总视差厚度 <b>${actualTotal.toFixed(1)}mm</b> (约占屏幕宽度的 ${(actualTotal/sw*100).toFixed(1)}%)。<br>
+        <b>1/30法则参考</b>: ${globalData.oneThirty} mm` : 
+        `<b>Analysis</b>: Limit budget allows Max Pos ${globalData.limPos.toFixed(1)}mm | Max Neg ${globalData.limNeg.toFixed(1)}mm.<br>
+        At your Applied IA of <b>${globalData.base}mm</b>, total depth is <b>${actualTotal.toFixed(1)}mm</b> (~${(actualTotal/sw*100).toFixed(1)}% of screen width).<br>
+        <b>1/30 Rule Ref</b>: ${globalData.oneThirty} mm`;
     
     document.getElementById('resAnalysis').innerHTML = `<span style="font-size:0.8rem; color:var(--label); line-height:1.5;">${bottleneckInfo}</span>`;
-    document.getElementById('rigHint').innerHTML = B < 85 ? (isZH ? '💡 轴距偏窄，建议使用 <b>垂直反射式支架（Mirror Rig）</b>' : '💡 Narrow IA: <b>Mirror Rig</b> recommended.') : '';
+    document.getElementById('rigHint').innerHTML = appliedB < 85 ? (isZH ? '💡 当前拍摄轴距偏窄，必须使用 <b>垂直反射式支架 (Mirror Rig)</b>' : '💡 Narrow IA: <b>Mirror Rig</b> required.') : '';
 
-    // 生成报告单 (Bilingual)
     const fStr = F.toString(), nStr = (N/1000).toFixed(1)+'m', sStr = (S/1000).toFixed(1)+'m';
     const lStr = isInf ? '∞' : (actualL/1000).toFixed(1)+'m';
 
     document.getElementById('textReportBox').value = isZH ? 
 `===== 3D 现场拍摄参数联通单 =====
-[计算结果 RESULT]
-主屏安全轴距 Base (Main) : ${globalData.base} mm
-辅屏安全轴距 Base (Sec)  : ${useSec ? globalData.secBase + ' mm' : '未启用'}
----------------------------
-[视差预算 Parallax Budget]
-正视差上限 Pos  : ${lim.pos.toFixed(2)} mm
-负视差上限 Neg  : ${lim.neg.toFixed(2)} mm
+[架设执行 SETUP]
+★ 实际架设轴距 Applied IA : ${globalData.base} mm
+(极限安全范围 Max Safe IA: ${globalData.maxBase.toFixed(2)} mm)
+${document.getElementById('useSecScreen').checked ? `辅屏安全参考 Sec Target IA : ${globalData.secBase} mm\n` : ''}---------------------------
+[实际画面视差 Actual Parallax on Screen]
+实际入屏 Act Pos : ${actualPos.toFixed(1)} mm (上限: ${globalData.limPos.toFixed(1)})
+实际出屏 Act Neg : ${actualNeg.toFixed(1)} mm (上限: ${globalData.limNeg.toFixed(1)})
+画面总视差 Total   : ${actualTotal.toFixed(1)} mm
 ---------------------------
 [场景几何 N–S–L]
 镜头焦距 Focal : ${fStr} mm
@@ -908,16 +1063,17 @@ function calculate() {
 ---------------------------
 [后期合成 Post Shift]
 HIT 物理值 : ${globalData.hitMm} mm
-像素平移量 : 左眼(L)右移 ${halfPx}px | 右眼(R)左移 ${halfPx}px
+像素平移量 : L→${halfPx}px | R←${halfPx}px
 ===========================` : 
 `===== 3D CAM ON-SET REPORT =====
-[COMPUTED RESULT]
-Safe IA (Main Screen) : ${globalData.base} mm
-Safe IA (Sec. Screen) : ${useSec ? globalData.secBase + ' mm' : 'Disabled'}
----------------------------
-[Parallax Budget]
-Max Positive  : ${lim.pos.toFixed(2)} mm
-Max Negative  : ${lim.neg.toFixed(2)} mm
+[SETUP EXECUTION]
+★ Applied IA : ${globalData.base} mm
+(Max Safe Limit: ${globalData.maxBase.toFixed(2)} mm)
+${document.getElementById('useSecScreen').checked ? `Sec Target IA : ${globalData.secBase} mm\n` : ''}---------------------------
+[Actual On-Screen Parallax]
+Actual Positive : ${actualPos.toFixed(1)} mm (Lim: ${globalData.limPos.toFixed(1)})
+Actual Negative : ${actualNeg.toFixed(1)} mm (Lim: ${globalData.limNeg.toFixed(1)})
+Total Depth     : ${actualTotal.toFixed(1)} mm
 ---------------------------
 [Depth Geometry N-S-L]
 Focal Length : ${fStr} mm
@@ -930,7 +1086,14 @@ HIT Shift    : ${globalData.hitMm} mm
 Pixel Shift  : L Eye -> ${halfPx}px | R Eye <- ${halfPx}px
 ===========================`;
 
-    updateVisualCardDOM(fStr, nStr, sStr, lStr, lim.pos.toFixed(2), lim.neg.toFixed(2), useSec, isZH);
+    const ipd = parseFloat(document.getElementById('ipdLimit').value) || 63.5;
+    updateVisualCardDOM(
+        fStr, nStr, sStr, lStr, 
+        actualPos.toFixed(1), actualNeg.toFixed(1), 
+        document.getElementById('useSecScreen').checked, isZH, 
+        M.toFixed(1), ipd.toFixed(1), senW.toFixed(1), res,
+        globalData.limPos.toFixed(1), globalData.limNeg.toFixed(1)
+    );
     updateVisualizer();
     saveParams();
 }
@@ -945,16 +1108,34 @@ function renderInvalid(msg) {
     updateVisualizer();
 }
 
-function updateVisualCardDOM(focal, near, zps, far, posL, negL, useSec, isZH) {
+function updateVisualCardDOM(focal, near, zps, far, actPosL, actNegL, useSec, isZH, mag, ipdLimit, sensorW, timelineRes, limPos, limNeg) {
     document.getElementById('vr-base').textContent = globalData.base + ' mm';
-    document.getElementById('vr-sec-base').textContent = useSec ? (isZH ? `辅屏 Sec IA: ${globalData.secBase} mm` : `Sec IA: ${globalData.secBase} mm`) : '';
-    document.getElementById('vr-pos').textContent = posL + ' mm';
-    document.getElementById('vr-neg').textContent = negL + ' mm';
+    
+    // 如果启用了辅屏，显示并更新数据；否则直接隐藏该元素
+    const secBaseEl = document.getElementById('vr-sec-base');
+    if (useSec) {
+        secBaseEl.style.display = 'block';
+        secBaseEl.textContent = isZH ? `辅屏 Sec IA: ${globalData.secBase} mm` : `Sec IA: ${globalData.secBase} mm`;
+    } else {
+        secBaseEl.style.display = 'none';
+    }
+    
+    document.getElementById('vr-pos').textContent = actPosL + ' mm';
+    document.getElementById('vr-pos-lim').textContent = 'Lim: ' + limPos;
+    document.getElementById('vr-neg').textContent = actNegL + ' mm';
+    document.getElementById('vr-neg-lim').textContent = 'Lim: ' + limNeg;
+    
     document.getElementById('vr-screen').textContent = document.getElementById('screenWidth').value + ' mm';
+    document.getElementById('vr-sensor').textContent = sensorW + ' mm';
+    document.getElementById('vr-res').textContent = timelineRes + ' px';
+    document.getElementById('vr-mag').textContent = mag + 'x';
     document.getElementById('vr-focal').textContent = focal + ' mm';
+    document.getElementById('vr-ipd').textContent = ipdLimit + ' mm';
+    
     document.getElementById('vr-n').textContent = near;
     document.getElementById('vr-l').textContent = far;
-    document.getElementById('vr-zps').textContent = zps;
+    document.getElementById('vr-zps-geom').textContent = zps; // 几何区域单独显示的ZPS
+    document.getElementById('vr-one-thirty').textContent = globalData.oneThirty + ' mm';
     
     // Dynamic translations for elements that need logical updating
     document.getElementById('vr-bottleneck-title').textContent = isZH ? '后期合成 Post Shift' : 'POST PRODUCTION SHIFT';
@@ -963,6 +1144,9 @@ function updateVisualCardDOM(focal, near, zps, far, posL, negL, useSec, isZH) {
     document.getElementById('vr-hit-px').textContent = globalData.hitPx + ' px';
     document.getElementById('vr-shift').textContent = `L→${globalData.halfPx}px | R←${globalData.halfPx}px`;
     document.getElementById('vr-timestamp').textContent = new Date().toLocaleString(isZH?'zh-CN':'en-US',{hour12:false});
+    
+    // 强制触发缩放更新以适应新的高度
+    scaleReportCard();
 }
 
 function scaleReportCard() {
@@ -970,13 +1154,20 @@ function scaleReportCard() {
     const card = document.getElementById('visualCardNode');
     if (!wrapper || !card) return;
     const aw = wrapper.clientWidth;
+    
+    // 优先清除现有的缩放，确保能够读取到实际高度
+    card.style.transform = 'none';
+    wrapper.style.height = 'auto';
+    const cardHeight = card.offsetHeight;
+    
     if (aw > 0 && aw < 450) {
         const s = aw / 450;
         card.style.transform = `scale(${s})`;
-        wrapper.style.height = (800 * s) + 'px';
+        // wrapper 高度需要匹配缩放后的卡片高度
+        wrapper.style.height = (cardHeight * s) + 'px';
     } else {
         card.style.transform = 'none';
-        wrapper.style.height = '800px';
+        wrapper.style.height = cardHeight + 'px';
     }
 }
 window.addEventListener('resize', () => {
@@ -1040,6 +1231,7 @@ function onDrag(e) {
                 document.getElementById('largestDist').value = nl.toFixed(1);
             }
         }
+        // 拖拽时为了视觉交互同步，允许直接修改输入框 (因为这是连续的鼠标动作而非打字)
         if (!isInf && useDavis && l < 2*d) document.getElementById('largestDist').value = (d*2).toFixed(1);
     }
     if (activeMarkerConfig.id === 'visS') {
@@ -1071,6 +1263,7 @@ function endDrag() {
 function updateVisualizer() {
     const n = parseFloat(document.getElementById('nearestDist').value) || 0;
     const s = parseFloat(document.getElementById('subjectDist').value) || 0;
+    // 视觉器优先读取输入框的显示值
     const l = parseFloat(document.getElementById('largestDist').value) || 0;
     const isInf = document.getElementById('isInfinity').checked;
     const mx = isDraggingVis ? dragMaxDist : getVisMax();
@@ -1130,15 +1323,23 @@ function copyTextReport() {
 function downloadVisualCard() {
     if (!globalData.isValid) { showToast(currentLang==='zh'?'⚠ 参数无效，无法生成海报':'⚠ Invalid params'); return; }
     const card = document.getElementById('visualCardNode');
-    const orig = card.style.transform;
+    
+    // 在截图前临时重置高度/transform以保证截图完整和清晰
+    const origTransform = card.style.transform;
     card.style.transform = 'none';
+    
     showToast(currentLang==='zh'?'⏳ 渲染高清海报中…':'⏳ Rendering Poster...');
     html2canvas(card, { scale: 2, backgroundColor: '#151517', useCORS: true }).then(canvas => {
-        card.style.transform = orig;
+        // 恢复原有缩放和外观
+        card.style.transform = origTransform;
+        
         const fn = `Stereo3D_F${document.getElementById('focalLength').value}mm_B${globalData.base}mm_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.png`;
         const a = document.createElement('a'); a.download = fn; a.href = canvas.toDataURL('image/png'); a.click();
         showToast(currentLang==='zh'?'✅ 海报已下载！':'✅ Poster Downloaded!');
-    }).catch(() => { card.style.transform = orig; showToast('❌ Failed'); });
+    }).catch(() => { 
+        card.style.transform = origTransform; 
+        showToast('❌ Failed'); 
+    });
 }
 
 window.onload = function() {
