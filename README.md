@@ -62,6 +62,15 @@
 <details>
 <summary>📋 完整更新日志（点击展开）</summary>
 
+## [3.3.0] - 2026-04-02
+
+### Added
+- 新增 VR / AR 头显 (Headsets) 放映设备预设分类，支持 Apple Vision Pro (等效虚拟 150寸影院) 和 Meta Quest 3 (等效虚拟 120寸) 沉浸式视角的精准轴距推算。
+- 大幅扩展后期时间线分辨率预设，新增标准电影工业打样画幅规格：4K/2K DCI Scope (2.39:1) 与 4K/2K DCI Flat (1.85:1)，完美匹配 DaVinci Resolve 和 Nuke 等专业工业流线。
+
+### Fixed
+- 彻底解决移动端导出数据海报时底部/边缘被异常裁切的问题。通过在 html2canvas 截图瞬间动态劫持并解除外层响应式容器的 overflow: hidden 与 scale 限制，并强制赋予视口足尺的宽高参数，保障手机端也能输出 100% 完整尺寸的高清全画幅海报。
+
 ## [3.2.0] - 2026-04-02
 
 ### Added
@@ -232,6 +241,15 @@ This project is licensed under AGPL v3.
 
 <details>
 <summary>📋 Full Changelog (click to expand)</summary>
+
+## [3.3.0] - 2026-04-02
+
+### Added
+- Added VR/AR headset presets: Apple Vision Pro (equivalent 150‑inch virtual cinema) and Meta Quest 3 (equivalent 120‑inch virtual screen) for accurate IA calculation in immersive viewing.
+- Expanded timeline resolution presets with industry‑standard deliverables: 4K/2K DCI Scope (2.39:1) and 4K/2K DCI Flat (1.85:1), fully compatible with DaVinci Resolve and Nuke.
+
+### Fixed
+- Completely fixed mobile poster export cropping issue. By dynamically overriding overflow:hidden and scale restrictions on the outer responsive container at the moment html2canvas captures, and forcing full viewport dimensions, the poster now exports 100% complete full‑frame HD images on mobile devices.
 
 ## [3.2.0] - 2026-04-02
 
