@@ -31,6 +31,9 @@
 - **后期 HIT 平移**：根据时间线分辨率，输出左右眼需要内移的像素量，直接用于 Nuke / DaVinci Resolve。
 - **实际架设反算**：输入现场实际使用的轴距，实时显示当前产生的正视差（入屏）、负视差（出屏）和总视差厚度，并与安全预算对比（超出标红）。
 - **正负视差独立预算**：可分别设置正视差上限（% 银幕宽）、负视差上限（% 银幕宽），以及 IPD 硬锁、角视差二次钳制。
+- **2D 俯视光路推演图**：基于真实物理坐标系的 SVG 俯视雷达图，动态绘制摄影机光轴会聚点（ZPS）与景深落点，并用红/绿/灰色块标示出屏超限区、安全区、入屏超限区。
+- **后期出屏预留空间推演**：针对“幕内安全拍摄，后期释放出屏”的工业流程，自动计算后期可平移的最高安全像素量及对应的出屏毫米数。
+- **智能联通单解析导入**：支持一键粘贴由本工具生成的联通单文本，自动提取所有参数并复原现场设置，大幅提升 DIT 与后期交接效率。
 - **辅屏模式**：同时为主屏（如影院）和辅屏（如电视）计算各自的安全轴距，满足多版本交付。
 - **可拖拽深度轨道**：直观调整 N/S/L 位置，自动防冲突和 Davis 保护。
 - **预设库**：内置常用银幕尺寸、传感器规格（电影机、无反、手机等）、时间线分辨率。
@@ -57,10 +60,26 @@
 
 ---
 
-💡 *希望这个工具能帮到还在坚持立体摄影的人。也祝观众的双眼看完片子后还能正常对焦。*
+💡 *希望这个工具能帮到还在坚持立体摄影的人。愿这门游走于光学与幻觉之间的手艺，在 AI 漫天的时代里，依然有人为它驻足、为它着迷，就像第一次透过红蓝眼镜看到世界浮出纸面那样。*
 
 <details>
 <summary>📋 完整更新日志（点击展开）</summary>
+
+## [3.7.0] - 2026-04-05
+### Fixed
+- **底层浮点数精度误差修正**：修复了当实际架设轴距完全等于极限安全轴距时，由于 JavaScript 底层二进制浮点计算误差（如 `50.00000000000001 > 50.0`），导致系统错误触发“⚠ 前/背景超限 0.0mm”警告的逻辑错误。已引入 `EPSILON` 容差机制进行静默平滑。
+
+## [3.6.0] - 2026-04-04
+### Added
+- **智能联通单解析导入 (Smart Import)**：联通单面板新增“📥 导入单据”功能。支持一键粘贴由本工具生成的联通单文本，系统将通过正则表达式自动提取主屏、传感器、焦距、N/S/L 及设定轴距等数值并全量复原参数，极大提升 DIT 与后期交接效率。
+- **状态自动回溯**：导入解析时，系统会自动判断 N/S 关系以还原 `[🔒 锁定：主体即最近景]` 勾选状态，并能精准识别并复现远景的 `∞` (无穷远) 设定。
+- **URL 追溯标记**：在导出的联通单末尾自动附加工具网址，方便剧组其他成员（特效、后期剪辑）通过单据文本快速访问计算器并复现现场数据。
+- **专属后期指导文案**：针对勾选了 `N=S` 的深景构图（窗户式构图），新增了针对性的“💡 后期出屏预留空间”智能提示。系统会根据背景的正视差剩余预算，自动反推后期可向外平移的最大安全像素量（px/眼）及对应的最大出屏效果（mm）。
+
+### Changed
+- **联通单排版重构**：采用符合工业生产逻辑的“金字塔结构”重排文本格式。将现场最关心的【核心架设 SETUP】和后期最关心的【后期联通 POST SHIFT】置于顶部，将【系统参数】与【视差分析】下放为底层参考基石。
+- **双端文案同步更新**：将优化后的 N=S 状态文案（后期预留空间）同时部署至“数据海报”渲染引擎与“现场联通单”中，替换了原有容易引起误解的常规表述。
+
 ## [3.5.0] - 2026-04-04
 ### Added
 - **全新 2D 俯视光路边界推演图 (Optical Ray Visualizer)**：在结果区新增基于真实物理坐标系的 SVG 俯视雷达图。完美复现好莱坞级 3D 软件视图，实时联动“实际架设轴距”，动态绘制摄影机光轴的会聚（ZPS），并标示出深度的实际落点。
@@ -87,7 +106,6 @@
 - 修复悬浮气泡小红点在查看后无法正确消除的状态遗留 Bug。
 
 ## [3.3.0] - 2026-04-02
-
 ### Added
 - 新增 VR / AR 头显 (Headsets) 放映设备预设分类，支持 Apple Vision Pro (等效虚拟 150寸影院) 和 Meta Quest 3 (等效虚拟 120寸) 沉浸式视角的精准轴距推算。
 - 大幅扩展后期时间线分辨率预设，新增标准电影工业打样画幅规格：4K/2K DCI Scope (2.39:1) 与 4K/2K DCI Flat (1.85:1)，完美匹配 DaVinci Resolve 和 Nuke 等专业工业流线。
@@ -96,7 +114,6 @@
 - 彻底解决移动端导出数据海报时底部/边缘被异常裁切的问题。通过在 html2canvas 截图瞬间动态劫持并解除外层响应式容器的 overflow: hidden 与 scale 限制，并强制赋予视口足尺的宽高参数，保障手机端也能输出 100% 完整尺寸的高清全画幅海报。
 
 ## [3.2.0] - 2026-04-02
-
 ### Added
 - 核心架构重大升级：引入「现场实际架设轴距 (Applied IA)」的正向推演系统。打破原有“吃干预算”的极限反推模式，支持摄影师通过滑块或输入框手动指定偏好的实际轴距，系统实时计算并可视化对比“实际产生视差”与“极限允许容差”。
 - 新增「总视差预算 (Total Depth)」动态运算，一目了然监控画面总厚度是否超越 2% ~ 3% 的舒适区。
@@ -108,7 +125,6 @@
 - 修复数据海报重构时意外丢失 vr-hit-px 和 vr-zps DOM 节点引发的 Cannot set properties of null 导致海报无法渲染弹出的严重报错。
 
 ## [3.1.0] - 2026-04-02
-
 ### Added
 - 引入“双屏协同/多机位 (Main & Secondary Target)”推算模式：支持同时为巨幕主发出版与 TV 电视版计算独立的安全轴距，满足多机位三维剧组的现场需求。
 - 全面实现中英双语 (EN/ZH) 实时无缝切换，覆盖计算器操作界面、一键复制的现场联通单 (Terminal Report) 以及生成的高清数据海报。
@@ -122,7 +138,6 @@
 - 修复由于移除了冗余“安全区间”展示而引发输入框 ID 丢失，导致 JavaScript 抛出 Cannot read properties of null 阻止引擎启动的致命错误。
 
 ## [3.0.1-beta] - 2026-04-02
-
 ### Changed
 - 修正核心文案与术语：纠正了界面中将“正视差”错误对应为“出屏”、“负视差”对应为“入屏”的低级翻译混淆。
 
@@ -130,7 +145,6 @@
 - 修复视差预算可视进度条（Budget Bar）由于 1.1 倍溢出倍数导致末端永远留有 9% 灰色空隙的视觉 Bug，现红蓝进度条可完美填满 100% 预算。
 
 ## [3.0.0-beta] - 2026-04-02
-
 > ⚠️ 注意：此版本为 Beta 测试版，包含部分已知问题待修复。
 
 ### Added
@@ -147,7 +161,6 @@
 - 移动设备在展开过多折叠面板时，调用高清海报渲染的弹窗偶尔会被底层图层异常遮挡。
 
 ## [2.2.0] - 2026-04-01
-
 ### Added
 - 新增双模数据输出系统：支持一键复制极简 ASCII 格式现场联通单，以及本地渲染导出 9:16 手机竖屏比例的高清数据海报。
 
@@ -161,7 +174,6 @@
 - 修复模态弹窗无法通过点击黑色背景空白处关闭的交互体验问题。
 
 ## [2.1.0] - 2026-04-01
-
 ### Added
 - 新增“后期工程/时间线分辨率”参数输入，可直接推算出后期合成软件中所需的精准左右眼像素平移量（Pixel Shift）。
 - 增加“角视差（Angular Parallax）”自动推演模式，支持基于观众离屏距离与最大允许角度推算物理上限。
@@ -170,7 +182,6 @@
 - 完善影视设备预设库，更新支持 Alexa 35、RED V-Raptor 等主流数字电影机参数，以及 2K/4K DCI Scope 等工程打包分辨率预设。
 
 ## [2.0.0] - 2026-03-31
-
 ### Added
 - 全新上线 1D 场景深度可视化预演轨道（Depth Visualizer）。
 - 支持直观拖拽“最近距离(N)”、“主体距离(S)”、“最远距离(L)”圆点标记，底层运算支持 60fps 的参数实时重算与反馈。
@@ -179,7 +190,6 @@
 - 替换可视化轨道默认的标记圆点，全面采用更直观的 Emoji 图标（🌷 近景、👤 主体、⛰️ 远景）搭配高亮白边设计。
 
 ## [1.2.0] - 2026-03-30
-
 ### Added
 - 增加家用及专业放映设备尺寸预设，包括 27寸电脑显示器 和 10米标准电影院银幕。
 - 增加移动端与入门拍摄设备传感器预设，包括 iPhone Pro 主摄、安卓一英寸大底及主流微单规格。
@@ -188,7 +198,6 @@
 - 调整全局默认硬性绝对视差上限为更宽裕的 50mm。
 
 ## [1.1.0] - 2026-03-29
-
 ### Added
 - 引入 Davis 浅景深强制保护机制选项，当遇到最远距离小于最近距离的两倍（$L < 2N$）时触发钳制介入。
 - 新增后期水平物理位移量（HIT）毫米值的推算功能。
@@ -198,7 +207,6 @@
 - 修复并统一底层逻辑，全面摒弃内八字（Toe-in）计算，确立绝对基于平行拍摄（Parallel Rig）与后期裁切的运算基准。
 
 ## [1.0.0] - 2026-03-28
-
 ### Added
 - 发布基础计算核心，正式提供基于传统 Bercovitz 方程式的 3D 摄像机最佳物理轴距（Base/IA）计算。
 - 提供基于 3% 屏幕宽度限制的全局视差容差计算辅助。
@@ -235,6 +243,9 @@ So I wrote this from scratch. The formulas are based on existing work (Bercovitz
 - **HIT pixel shift** – Pixel shift per eye based on timeline resolution, for Nuke/DaVinci Resolve.
 - **Applied IA with real‑time feedback** – Enter actual base used on set; see actual positive/negative/total parallax compared to safe limits (red if exceeded).
 - **Independent positive/negative budgets** – Set positive limit (% screen width), negative limit (% screen width), IPD hard cap, angular parallax clamp.
+- **2D overhead ray visualizer** – SVG radar‑style diagram with real‑world scaling, showing ZPS convergence and depth limits (red/green/gray zones).
+- **Post pop‑out reservation engine** – For N=S compositions, calculates maximum safe pixel shift for post‑production pop‑out effects.
+- **Smart import from on‑set report** – One‑click paste to restore all parameters from a previously generated report.
 - **Secondary target mode** – Calculate separate safe IA for a second screen (e.g., TV).
 - **Draggable depth track** – Adjust N/S/L visually with auto‑collision avoidance and Davis enforcement.
 - **Presets** – Common screen sizes, sensor types (cinema, mirrorless, mobile), timeline resolutions.
@@ -261,13 +272,52 @@ This project is licensed under AGPL v3.
 
 ---
 
-💡 *Hope this helps the few people still shooting stereoscopic. And may your audience’s eyes stay comfortably converged after watching your film.*
+💡 *Hope this helps the few people still shooting stereoscopic. May this craft — balancing optics and illusion — survive the age of AI, still enchanting those who pause and wonder, just like the first time we saw the world float off the page through red‑blue glasses.*
 
 <details>
 <summary>📋 Full Changelog (click to expand)</summary>
 
-## [3.3.0] - 2026-04-02
+## [3.7.0] - 2026-04-05
+### Fixed
+- **Floating‑point precision fix**: Resolved a logical error where exact equality between applied IA and max safe IA triggered false “⚠ Over limit by 0.0mm” warnings due to JavaScript binary floating‑point inaccuracies (e.g., `50.00000000000001 > 50.0`). Introduced an `EPSILON` tolerance mechanism for silent smoothing.
 
+## [3.6.0] - 2026-04-04
+### Added
+- **Smart Import from on‑set report**: Added a “📥 Import” button to the report panel. Users can paste any previously generated report text; the system automatically extracts main screen, sensor, focal length, N/S/L, applied IA, and restores all parameters. Greatly improves DIT and post‑production handover efficiency.
+- **Automatic state recovery**: The import parser intelligently restores the `[🔒 Lock: N=S]` checkbox state and correctly recognizes infinity (`∞`) for the far distance.
+- **URL tracking**: The exported report now automatically includes the tool’s URL at the end, allowing other crew members (VFX, editorial) to quickly access the calculator and replicate the exact setup.
+- **Targeted post‑production guidance**: For `N=S` compositions (window‑frame shots), a new “💡 Post pop‑out reservation” tip appears. Based on remaining positive parallax budget, it calculates the maximum safe pixel shift (px/eye) and the corresponding pop‑out effect (mm) achievable in post.
+
+### Changed
+- **Report layout restructured**: Adopted a “pyramid structure” aligned with production workflows. The most critical sections — [SETUP] and [POST SHIFT] — are now at the top, while [SYSTEM] and [PARALLAX ANALYSIS] serve as lower reference layers.
+- **Bilingual copy updates**: The improved N=S guidance text is now deployed both in the visual poster rendering engine and the on‑set report, replacing previously confusing wording.
+
+## [3.5.0] - 2026-04-04
+### Added
+- **2D overhead optical ray visualizer**: Added a new SVG‑based overhead radar chart in the results area, replicating Hollywood‑grade 3D software views. It dynamically draws the camera optical axes’ convergence (ZPS) and marks actual depth positions in real time, linked to the applied IA slider.
+- **Three‑zone safety mask**: The 2D view now includes precise safety masks: red for pop‑out over‑limit, green for safe depth, and gray for behind‑screen over‑limit. Combined with dynamic physical grids (e.g., 1m, 5m scaled), depth thickness and window violations become instantly visible.
+
+### Changed
+- **Parallax bar intuition mirroring**: Reversed the layout of the parallax budget bar. Now left represents “pop‑out (negative parallax, closer to camera)” and right represents “behind‑screen (positive parallax, receding into background)”, aligning perfectly with cinematographers’ spatial intuition.
+- **2D chart rendering and semantic improvements**:
+  - Explicitly labeled the horizontal depth axis as “to scale” and the vertical camera separation as “magnified for illustration”.
+  - Introduced a three‑layer smart label anti‑overlap system, eliminating text occlusion when ZPS, limits, and actual N/L distances are too close.
+  - Added dynamic “Over” status feedback: when an actual depth exceeds the safety boundary, the bar and text instantly turn warning‑colored with an “Over” tag.
+  - Completely refactored the SVG color engine to support CSS variables, enabling full‑chart bilingual (EN/ZH) seamless switching.
+
+## [3.4.0] - 2026-04-03
+### Added
+- **Post pop‑out reservation engine**: For the common industrial workflow of “shoot safe within screen, release pop‑out in post”, this new module calculates, when using N=S composition, the maximum safe pixel shift (px) and corresponding pop‑out distance (mm) achievable by shifting the image outward in post, based on unused positive parallax budget.
+- **Floating tip bubble system**: Replaced the intrusive top banner with a compact floating bubble at the bottom‑right corner.
+
+### Changed
+- Improved bubble interaction with a “breathing red dot” alert: the dot only blinks when a new diagnostic analysis is triggered and the bubble is collapsed, intelligently reminding without visual clutter.
+
+### Fixed
+- Fixed a bug where N=S (absolute safe composition) was incorrectly blocked by the underlying logic, triggering a “N must be less than S” error.
+- Fixed a state persistence bug where the red dot did not disappear after the bubble was viewed.
+
+## [3.3.0] - 2026-04-02
 ### Added
 - Added VR/AR headset presets: Apple Vision Pro (equivalent 150‑inch virtual cinema) and Meta Quest 3 (equivalent 120‑inch virtual screen) for accurate IA calculation in immersive viewing.
 - Expanded timeline resolution presets with industry‑standard deliverables: 4K/2K DCI Scope (2.39:1) and 4K/2K DCI Flat (1.85:1), fully compatible with DaVinci Resolve and Nuke.
@@ -276,7 +326,6 @@ This project is licensed under AGPL v3.
 - Completely fixed mobile poster export cropping issue. By dynamically overriding overflow:hidden and scale restrictions on the outer responsive container at the moment html2canvas captures, and forcing full viewport dimensions, the poster now exports 100% complete full‑frame HD images on mobile devices.
 
 ## [3.2.0] - 2026-04-02
-
 ### Added
 - Major architecture upgrade: Introduced "Applied IA" forward calculation system. Cinematographers can now manually input the actual base used on set via slider or number input, with real‑time visualization comparing actual parallax against safety limits.
 - Added dynamic "Total Depth" calculation to monitor whether the total parallax exceeds the 2%–3% comfort zone.
@@ -288,7 +337,6 @@ This project is licensed under AGPL v3.
 - Fixed missing DOM nodes (vr-hit-px, vr-zps) causing `Cannot set properties of null` error and preventing poster rendering.
 
 ## [3.1.0] - 2026-04-02
-
 ### Added
 - Added "Main & Secondary Target" dual‑screen mode: calculates independent safe IAs for cinema main release and TV secondary release simultaneously.
 - Full bilingual (EN/ZH) real‑time switching, covering UI, on‑set terminal report, and exported visual poster.
@@ -302,7 +350,6 @@ This project is licensed under AGPL v3.
 - Fixed missing input field IDs after removing the old "safety zone" display, which prevented the engine from starting.
 
 ## [3.0.1-beta] - 2026-04-02
-
 ### Changed
 - Fixed terminology confusion: corrected swapped "positive/negative parallax" labels in the UI.
 
@@ -310,7 +357,6 @@ This project is licensed under AGPL v3.
 - Fixed budget bar visual bug where a 9% grey gap remained at the end due to a 1.1× overflow multiplier.
 
 ## [3.0.0-beta] - 2026-04-02
-
 > ⚠️ Note: Beta release with known issues.
 
 ### Added
@@ -327,7 +373,6 @@ This project is licensed under AGPL v3.
 - On mobile devices, the poster rendering modal may be occluded when many accordion panels are expanded.
 
 ## [2.2.0] - 2026-04-01
-
 ### Added
 - Dual‑mode data output: one‑click copy of ASCII on‑set slate and local export of 9:16 HD data poster.
 
@@ -341,7 +386,6 @@ This project is licensed under AGPL v3.
 - Fixed modal not closing when tapping on background overlay.
 
 ## [2.1.0] - 2026-04-01
-
 ### Added
 - Added "Timeline Resolution" parameter to calculate exact pixel shift for post‑production.
 - Added "Angular Parallax" mode – calculates physical limits based on viewing distance and max allowable angle.
@@ -350,7 +394,6 @@ This project is licensed under AGPL v3.
 - Expanded cinema camera presets (Alexa 35, RED V-Raptor) and delivery resolutions (2K/4K DCI Scope).
 
 ## [2.0.0] - 2026-03-31
-
 ### Added
 - Added 1D depth visualizer track.
 - Draggable markers for Near (N), Subject (S), Far (L) with 60fps real‑time feedback.
@@ -359,7 +402,6 @@ This project is licensed under AGPL v3.
 - Replaced markers with intuitive emoji icons (🌷 Near, 👤 Subject, ⛰️ Far) and white borders.
 
 ## [1.2.0] - 2026-03-30
-
 ### Added
 - Added home/professional screen presets (27" monitor, 10m cinema screen).
 - Added mobile sensor presets (iPhone Pro main camera, 1‑inch type, mainstream mirrorless).
@@ -368,7 +410,6 @@ This project is licensed under AGPL v3.
 - Default absolute parallax cap increased to 50mm.
 
 ## [1.1.0] - 2026-03-29
-
 ### Added
 - Added Davis shallow depth‑of‑field protection (enforces L ≥ 2N).
 - Added HIT physical shift (mm) calculation.
@@ -378,7 +419,6 @@ This project is licensed under AGPL v3.
 - Unified calculation logic – fully switched to parallel rig (no toe‑in) with post‑cropping.
 
 ## [1.0.0] - 2026-03-28
-
 ### Added
 - Initial release: Bercovitz‑based IA calculation.
 - 3% screen‑width global parallax tolerance helper.
