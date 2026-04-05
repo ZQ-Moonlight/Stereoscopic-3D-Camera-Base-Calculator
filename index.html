@@ -25,26 +25,33 @@
         任何修改、分发或通过网络提供服务的使用，必须公开修改后的完整源代码。
     -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>3D立体摄影轴距计算器 Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
+            /* Color Tokens */
             --primary: #007AFF;
             --primary-dark: #005bb5;
             --bg: #f2f2f7;
             --card: rgba(255,255,255,0.92);
             --text: #1c1c1e;
             --label: #6e6e73;
-            --border: rgba(60,60,67,0.15);
-            --input-bg: rgba(255,255,255,0.7);
+            --border: rgba(60,60,67,0.12);
+            --input-bg: rgba(255,255,255,0.8);
             --result-bg: rgba(0,122,255,0.06);
             --result-border: rgba(0,122,255,0.18);
             --danger: #ff3b30;
             --success: #34c759;
             --warning: #ff9f0a;
-            --adv-bg: rgba(0,0,0,0.025);
-            --shadow: 0 8px 32px rgba(0,0,0,0.09);
+            --adv-bg: rgba(0,0,0,0.035);
+            --shadow: 0 8px 32px rgba(0,0,0,0.08);
+
+            /* Radius Tokens */
+            --r-sm: 8px;
+            --r-md: 12px;
+            --r-lg: 16px;
+            --r-xl: 24px;
         }
         [data-theme="dark"] {
             --primary: #0a84ff;
@@ -60,240 +67,245 @@
             --danger: #ff453a;
             --success: #30d158;
             --warning: #ffd60a;
-            --adv-bg: rgba(255,255,255,0.04);
+            --adv-bg: rgba(255,255,255,0.06);
             --shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
         * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
             background: var(--bg); color: var(--text);
-            line-height: 1.6; padding: 16px; margin: 0;
+            line-height: 1.6; padding: clamp(6px, 2vw, 16px); margin: 0;
             display: flex; justify-content: center;
             transition: background 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
         }
         .container {
             background: var(--card); backdrop-filter: blur(20px);
-            max-width: 1040px; width: 100%; padding: 28px;
-            border-radius: 24px; box-shadow: var(--shadow);
+            -webkit-backdrop-filter: blur(20px);
+            max-width: 1040px; width: 100%; padding: clamp(16px, 4vw, 32px);
+            border-radius: var(--r-xl); box-shadow: var(--shadow);
             border: 1px solid var(--border);
         }
         .header {
-            display: flex; flex-wrap: wrap;
-            justify-content: space-between; align-items: flex-start;
-            gap: 12px; margin-bottom: 22px;
-            border-bottom: 1px solid var(--border); padding-bottom: 18px;
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            gap: 12px; margin-bottom: 24px; padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
         }
-        .header-title h2 { margin: 0; font-size: clamp(1.2rem,3.5vw,1.55rem); font-weight: 800; letter-spacing: -0.4px; }
-        .header-title .sub { display: block; font-size: 0.8rem; color: var(--label); font-weight: 500; margin-top: 3px; }
-        .header-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .ctrl-btn {
+        .header-title h2 { margin: 0; font-size: clamp(1.15rem, 3.5vw, 1.5rem); font-weight: 800; letter-spacing: -0.4px; }
+        .header-title .sub { display: block; font-size: 0.85rem; color: var(--label); font-weight: 500; margin-top: 2px; }
+        .header-controls { display: flex; gap: 8px; }
+        .ctrl-btn-icon {
+            width: 36px; height: 36px; border-radius: 50%;
             background: var(--adv-bg); border: 1px solid var(--border);
-            color: var(--text); padding: 7px 14px; border-radius: 20px;
-            cursor: pointer; font-size: 0.82rem; font-weight: 600;
-            transition: all 0.25s; white-space: nowrap;
+            color: var(--text); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.85rem; font-weight: 700; transition: all 0.2s;
         }
-        .ctrl-btn:hover { border-color: var(--primary); background: var(--result-bg); }
-        .ctrl-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .ctrl-btn-icon:hover { border-color: var(--primary); color: var(--primary); transform: scale(1.05); }
 
-        .main-layout { display: flex; flex-direction: column; gap: 22px; }
+        .main-layout { display: flex; flex-direction: column; gap: 24px; }
         @media (min-width: 780px) {
-            .main-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+            .main-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
         }
 
-        .form-group { margin-bottom: 16px; }
-        .form-row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+        .form-group { margin-bottom: 16px; overflow: visible; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
         .form-row .form-group { flex: 1 1 45%; margin-bottom: 0; }
 
-        label { display: block; font-weight: 600; margin-bottom: 7px; font-size: 0.88rem; color: var(--label); }
-        .en { font-size: 0.73rem; color: var(--primary); font-weight: 400; display: block; margin-top: 1px; opacity: 0.8; }
+        label { display: flex; align-items: center; font-weight: 600; margin-bottom: 8px; font-size: 0.85rem; color: var(--text); }
         select, input[type="number"] {
-            width: 100%; padding: 11px 13px;
-            border: 1px solid var(--border); border-radius: 11px;
-            font-size: 0.97rem; background: var(--input-bg);
+            width: 100%; padding: 12px 14px;
+            border: 1px solid var(--border); border-radius: var(--r-md);
+            font-size: 1rem; background: var(--input-bg);
             color: var(--text); transition: all 0.25s;
         }
         select:focus, input[type="number"]:focus {
             outline: none; border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(0,122,255,0.14);
+            box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
         }
         .preset-select { margin-bottom: 8px; }
         .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-        .checkbox-group input { width: 1.1rem; height: 1.1rem; accent-color: var(--primary); }
-        .checkbox-group label { margin: 0; font-weight: 500; color: var(--text); font-size: 0.88rem; }
+        .checkbox-group input { width: 1.15rem; height: 1.15rem; accent-color: var(--primary); }
+        .checkbox-group label { margin: 0; font-weight: 500; font-size: 0.85rem; }
 
+        /* Unified Card Style */
         .section-card {
-            background: var(--adv-bg); border: 1px solid var(--border);
-            border-radius: 16px; padding: 18px; margin-bottom: 16px;
+            background: var(--adv-bg); box-shadow: inset 0 0 0 1px var(--border);
+            border-radius: var(--r-lg); padding: 20px; margin-bottom: 16px; overflow: visible;
         }
         .section-title {
-            font-size: 0.95rem; font-weight: 700; margin-bottom: 14px;
+            font-size: 1rem; font-weight: 700; margin-bottom: 16px;
             display: flex; align-items: center; gap: 6px; color: var(--text);
         }
+
+        /* Unified Accordion Card */
+        .accordion-card {
+            background: var(--adv-bg); border-radius: var(--r-lg);
+            box-shadow: inset 0 0 0 1px var(--border); margin-bottom: 16px;
+            overflow: visible;
+        }
         .accordion-btn {
-            background: var(--adv-bg); color: var(--text); cursor: pointer;
-            padding: 13px 16px; width: 100%; border: 1px solid var(--border);
-            text-align: left; font-size: 0.95rem; font-weight: 700;
-            transition: 0.25s; border-radius: 13px; margin-bottom: 10px;
+            background: transparent; color: var(--text); cursor: pointer;
+            padding: 16px 20px; width: 100%; border: none; outline: none;
+            text-align: left; font-size: 1rem; font-weight: 700;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .accordion-btn:hover { border-color: var(--primary); }
         .accordion-content {
-            display: none; background: var(--adv-bg);
-            border: 1px solid var(--border); border-top: none;
-            border-radius: 0 0 13px 13px; margin-top: -14px; margin-bottom: 18px;
-            padding: 0; overflow: hidden;
+            display: none; padding: 16px 20px 20px 20px;
         }
-        .accordion-content.show { display: block; padding: 18px; }
+        .accordion-card.show .accordion-content { display: block; }
+        .accordion-card.show .accordion-btn { border-bottom: 1px solid var(--border); margin-bottom: 0; }
 
-        .suggest-banner {
-            background: rgba(255,159,10,0.1); border-left: 3px solid var(--warning);
-            border-radius: 0 10px 10px 0; padding: 10px 14px;
-            font-size: 0.82rem; color: var(--label); margin-bottom: 14px;
-            display: none;
+        /* Tooltip System */
+        .info-icon {
+            display: inline-flex; width: 16px; height: 16px;
+            background: var(--primary); color: #fff;
+            border-radius: 50%; font-size: 10px; font-weight: 900;
+            align-items: center; justify-content: center;
+            cursor: help; margin-left: 6px; position: relative;
+            vertical-align: middle; flex-shrink: 0; line-height: 1;
+            border: none; outline: none; transition: transform 0.15s;
         }
-        .suggest-banner.show { display: block; }
+        .info-icon:hover { transform: scale(1.15); }
+        .info-pop {
+            position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+            background: rgba(20,20,22,0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            color: #f0f0f0; padding: 10px 14px; border-radius: var(--r-md);
+            font-size: 0.75rem; font-weight: 400; line-height: 1.5;
+            width: max-content; max-width: min(280px, 76vw);
+            pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 500;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08);
+            white-space: normal; text-align: left;
+        }
+        .info-pop::after {
+            content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+            border: 5px solid transparent; border-top-color: rgba(20,20,22,0.95);
+        }
+        .info-icon:hover .info-pop, .info-icon.active .info-pop { opacity: 1; }
 
-        .budget-bar-wrap { margin-top: 10px; }
+        /* Budget Bar */
+        .budget-bar-wrap { margin-top: 12px; }
         .budget-bar-bg {
-            height: 12px; background: transparent; border-radius: 6px;
+            height: 12px; background: transparent; border-radius: var(--r-sm);
             display: flex; gap: 4px;
         }
-        .limit-wrap-neg { background: rgba(255,59,48,0.15); border-radius: 6px 0 0 6px; position: relative; overflow: hidden; display: flex; justify-content: flex-end; }
-        .limit-wrap-pos { background: rgba(0,122,255,0.15); border-radius: 0 6px 6px 0; position: relative; overflow: hidden; display: flex; justify-content: flex-start; }
+        .limit-wrap-neg { background: rgba(255,59,48,0.15); border-radius: var(--r-sm) 0 0 var(--r-sm); position: relative; overflow: hidden; display: flex; justify-content: flex-end; }
+        .limit-wrap-pos { background: rgba(0,122,255,0.15); border-radius: 0 var(--r-sm) var(--r-sm) 0; position: relative; overflow: hidden; display: flex; justify-content: flex-start; }
         .fill-neg { background: var(--danger); height: 100%; transition: width 0.1s linear; }
         .fill-pos { background: var(--primary); height: 100%; transition: width 0.1s linear; }
-        
-        .budget-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--label); margin-top: 6px; }
+        .fill-neg.overflow, .fill-pos.overflow { animation: overflow-pulse 0.8s ease-in-out infinite alternate; }
+        @keyframes overflow-pulse { from { opacity: 1; } to { opacity: 0.4; } }
         .actual-labels { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
 
-        .visualizer-section { background: var(--adv-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 16px; }
-        .visualizer-container { position: relative; height: 48px; margin-top: 12px; touch-action: pan-y; user-select: none; }
-        .vis-track-container { position: absolute; left: 10px; right: 10px; top: 0; bottom: 0; }
-        .vis-track { position: absolute; top: 50%; left: 0; right: 0; height: 3px; background: var(--border); transform: translateY(-50%); border-radius: 2px; }
+        /* Visualizer */
+        .visualizer-section { background: var(--adv-bg); padding: 20px; border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px var(--border); margin-bottom: 24px; }
+        .visualizer-container { position: relative; height: 80px; margin-top: 16px; touch-action: pan-y; user-select: none; }
+        .vis-track-container { position: absolute; left: 14px; right: 14px; top: 0; bottom: 0; }
+        .vis-track { position: absolute; top: 65%; left: 0; right: 0; height: 4px; background: var(--border); transform: translateY(-50%); border-radius: 2px; }
         .vis-marker {
-            position: absolute; top: 50%; width: 26px; height: 26px; border-radius: 50%;
+            position: absolute; top: 65%; width: 28px; height: 28px; border-radius: 50%;
             transform: translate(-50%,-50%); cursor: grab;
             display: flex; justify-content: center; align-items: center;
-            font-size: 13px; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.18);
-            background: var(--card); border: 2px solid; transition: box-shadow 0.15s;
+            font-size: 13px; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            background: var(--card); border: 2.5px solid; transition: box-shadow 0.15s, top 0.2s;
         }
-        .vis-marker.active-drag { cursor: grabbing; transform: translate(-50%,-50%) scale(1.2); z-index: 1000 !important; }
+        .vis-marker.active-drag { cursor: grabbing; transform: translate(-50%,-50%) scale(1.25); z-index: 1000 !important; }
         .vis-n { border-color: var(--danger); }
         .vis-s { border-color: var(--primary); }
         .vis-l { border-color: var(--success); }
         .vis-label {
-            position: absolute; top: -30px; white-space: nowrap;
-            background: rgba(0,0,0,0.78); color: #fff;
-            padding: 3px 7px; border-radius: 5px; font-size: 10px;
-            pointer-events: none;
+            position: absolute; top: -38px; white-space: nowrap;
+            background: rgba(20,20,22,0.85); color: #fff;
+            padding: 4px 8px; border-radius: var(--r-sm); font-size: 0.75rem; font-weight: 600;
+            pointer-events: none; transition: top 0.2s; backdrop-filter: blur(4px);
         }
-        .vis-n .vis-label { top: 28px; background: rgba(255,59,48,0.9); }
+        .vis-n .vis-label { top: -38px; background: rgba(255,59,48,0.9); }
         .vis-s .vis-label { background: rgba(0,122,255,0.9); }
         .vis-l .vis-label { background: rgba(52,199,89,0.9); }
 
+        /* Results */
         .result-box {
             background: var(--result-bg); border: 1px solid var(--result-border);
-            padding: 20px; border-radius: 16px;
+            padding: 24px; border-radius: var(--r-lg); display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 16px; transition: background 0.3s, border-color 0.3s;
         }
-        .result-main { text-align: center; padding: 10px 0; }
-        .result-num { font-size: 2.6rem; font-weight: 900; color: var(--danger); line-height: 1; }
+        .result-label { font-size: 0.85rem; color: var(--label); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .result-num { font-size: 3rem; font-weight: 900; color: var(--text); line-height: 1; letter-spacing: -1px; }
         .result-unit { font-size: 1rem; font-weight: 600; color: var(--label); margin-left: 4px; }
-        .result-label { font-size: 0.8rem; color: var(--label); font-weight: 600; margin-top: 4px; }
-        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-        .result-cell { background: var(--card); border: 1px solid var(--border); border-radius: 11px; padding: 11px 13px; }
-        .result-cell .rc-label { font-size: 0.72rem; color: var(--label); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .result-cell .rc-val { font-size: 1.1rem; font-weight: 700; margin-top: 2px; }
+        
+        .applied-ia-card {
+            background: var(--adv-bg); padding: 20px; border-radius: var(--r-lg);
+            box-shadow: inset 0 0 0 1px var(--border); margin-bottom: 24px;
+        }
+        .applied-ia-header { font-size: 0.95rem; font-weight: 800; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+        .result-cell { background: var(--card); border-radius: var(--r-md); padding: 14px; box-shadow: inset 0 0 0 1px var(--border); }
+        .result-cell .rc-label { font-size: 0.75rem; color: var(--label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .result-cell .rc-val { font-size: 1.15rem; font-weight: 800; margin-top: 4px; }
+        
         .analysis-box {
             background: var(--adv-bg); border-left: 3px solid var(--border);
-            border-radius: 0 10px 10px 0; padding: 11px 14px;
-            font-size: 0.83rem; color: var(--label); margin-top: 14px; line-height: 1.55;
+            border-radius: 0 var(--r-md) var(--r-md) 0; padding: 14px 16px;
+            font-size: 0.85rem; color: var(--label); margin-top: 16px; line-height: 1.6;
         }
-        .tag-safe { color: var(--success); font-weight: 700; }
-        .tag-danger { color: var(--danger); font-weight: 700; }
-        .tag-info { color: var(--primary); font-weight: 700; }
 
-        .rig-hint { font-size: 0.82rem; color: var(--label); margin-top: 10px; text-align: right; font-weight: 600; }
-        #davisAlert { display:none; color:var(--warning); font-size:0.8rem; margin-top:5px; font-weight:700; }
+        .rig-hint { font-size: 0.85rem; color: var(--label); margin-top: 10px; font-weight: 600; text-align: right; }
 
         .terminal-box {
-            width: 100%; height: 300px; background: #1a1a1a; color: #4af626;
-            font-family: 'SFMono-Regular', Menlo, monospace; font-size: 0.85rem;
-            padding: 14px; border-radius: 11px; border: 1px solid rgba(0,0,0,0.4);
-            resize: none; line-height: 1.55;
-            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); margin-top: 8px; margin-bottom: 12px;
+            width: 100%; height: 260px; background: #1a1a1a; color: #4af626;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem;
+            padding: 16px; border-radius: var(--r-md); border: 1px solid rgba(0,0,0,0.4);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); resize: none; line-height: 1.6; margin-top: 8px; margin-bottom: 16px;
         }
         .btn-primary {
             width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;
-            padding: 13px 10px; background: var(--primary); color: #fff;
-            border: none; border-radius: 11px; font-size: 0.97rem; font-weight: 700;
+            padding: 14px; background: var(--primary); color: #fff;
+            border: none; border-radius: var(--r-md); font-size: 1rem; font-weight: 700;
             cursor: pointer; transition: all 0.2s;
         }
         .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        .btn-secondary { background: #2c2c2e; }
-        .btn-secondary:hover { background: #1c1c1e; }
-        [data-theme="dark"] .btn-secondary { background: #3a3a3c; }
 
+        /* Report Card Modernization */
         .report-card-wrapper { width: 100%; display: flex; justify-content: center; overflow: hidden; }
         .report-card {
-            background: #151517;
-            background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-            background-size: 20px 20px;
-            color: #fff; width: 450px; height: auto; min-height: 800px; flex-shrink: 0;
-            transform-origin: top center; border-radius: 22px; overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.09);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            display: flex; flex-direction: column; padding-bottom: 24px;
+            background: #151517; color: #fff; width: 450px; height: auto; min-height: 800px;
+            flex-shrink: 0; transform-origin: top center; border-radius: var(--r-xl); overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: flex; flex-direction: column; padding-bottom: 24px;
         }
-        .rc-header { background: linear-gradient(135deg, #005bb5, #001a33); padding: 24px; flex-shrink: 0; }
-        .rc-title { font-size: 1.35rem; font-weight: 800; margin: 0; color: #fff; }
-        .rc-subtitle { font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-top: 5px; text-transform: uppercase; letter-spacing: 2px; }
-        .rc-body { padding: 18px 24px 0 24px; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; gap: 12px;}
-        .rc-section-title { font-size: 0.78rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 5px; }
-        .rc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
-        .rc-item { display: flex; align-items: center; background: rgba(255,255,255,0.04); padding: 10px 11px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.05); }
-        .rc-icon { width: 20px; height: 20px; margin-right: 9px; stroke: #0a84ff; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .rc-header { 
+            background: #1c1c1e; padding: 24px; flex-shrink: 0; position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .rc-title { font-size: 1.5rem; font-weight: 900; margin: 0; color: #fff; letter-spacing: -0.5px; }
+        .rc-subtitle { font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .rc-body { padding: 20px 24px 0 24px; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; gap: 14px;}
+        .rc-section-title { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; font-weight: 700;}
+        .rc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+        .rc-item { display: flex; align-items: center; background: rgba(255,255,255,0.04); padding: 12px; border-radius: var(--r-md); border: 1px solid rgba(255,255,255,0.05); }
+        .rc-icon { width: 22px; height: 22px; margin-right: 10px; stroke: #0a84ff; fill: none; stroke-width: 1.5; flex-shrink: 0; }
         .rc-data-col { display: flex; flex-direction: column; }
-        .rc-label-small { font-size: 0.68rem; color: #888; text-transform: uppercase; }
-        .rc-value { font-size: 1rem; font-weight: 700; color: #eee; }
-        .rc-final-box { background: rgba(10,132,255,0.14); border: 1px solid rgba(10,132,255,0.28); border-radius: 14px; padding: 18px; text-align: center; margin-bottom: 8px; }
-        .rc-final-label { font-size: 0.8rem; color: #0a84ff; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .rc-final-value { font-size: 2.6rem; font-weight: 900; color: #fff; margin: 4px 0; }
-        .rc-final-sub { font-size: 0.82rem; color: #aaa; }
-        .rc-hit-box { display: flex; justify-content: space-between; background: rgba(52,199,89,0.1); padding: 14px 16px; border-radius: 11px; border-left: 3px solid #34c759; align-items: center; }
-        .rc-hit-val { font-size: 1.15rem; font-weight: 700; color: #34c759; }
-
-        .glossary-item { border-bottom: 1px solid var(--border); padding: 12px 0; }
-        .glossary-item:last-child { border-bottom: none; }
-        .glossary-term { font-weight: 700; font-size: 0.95rem; color: var(--primary); }
-        .glossary-def { font-size: 0.85rem; color: var(--label); margin-top: 4px; line-height: 1.5; }
-        .glossary-formula { font-family: monospace; background: var(--adv-bg); padding: 4px 8px; border-radius: 6px; font-size: 0.82rem; margin-top: 5px; display: inline-block; color: var(--text); }
-
+        .rc-label-small { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 600; }
+        .rc-value { font-size: 1.15rem; font-weight: 800; color: #eee; margin-top: 2px;}
+        .rc-final-box { background: rgba(10,132,255,0.12); border: 1px solid rgba(10,132,255,0.3); border-radius: var(--r-lg); padding: 20px; text-align: center; margin-bottom: 12px; }
+        .rc-final-label { font-size: 0.85rem; color: #0a84ff; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .rc-final-value { font-size: 3rem; font-weight: 900; color: #fff; margin: 4px 0; letter-spacing: -1px;}
+        .rc-hit-box { display: flex; flex-direction: column; background: rgba(52,199,89,0.1); padding: 16px; border-radius: var(--r-md); border-left: 3px solid #34c759; }
+        
         #toast {
-            visibility: hidden; min-width: 240px;
-            background: rgba(0,0,0,0.82); backdrop-filter: blur(8px);
-            color: #fff; text-align: center; border-radius: 11px;
-            padding: 13px 22px; position: fixed; z-index: 9999;
-            left: 50%; bottom: 40px; transform: translateX(-50%);
-            font-size: 0.9rem; font-weight: 500; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+            visibility: hidden; min-width: 240px; background: rgba(20,20,22,0.9); backdrop-filter: blur(10px);
+            color: #fff; text-align: center; border-radius: var(--r-md); padding: 14px 24px; position: fixed; z-index: 9999;
+            left: 50%; bottom: 40px; transform: translateX(-50%); font-size: 1rem; font-weight: 600; opacity: 0; transition: opacity 0.3s, bottom 0.3s; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         }
-        #toast.show { visibility: visible; opacity: 1; bottom: 58px; }
-
-        .formula-note { font-size: 0.78rem; color: var(--label); padding: 10px 14px; background: var(--adv-bg); border-radius: 10px; margin-top: 8px; line-height: 1.5; border-left: 3px solid var(--primary); }
-        code { font-family: monospace; background: var(--adv-bg); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 60px; }
 
         /* Floating Tip Bubbles */
         .floating-tip {
             position: fixed;
             bottom: 24px;
             right: 24px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+            z-index: 9999;
         }
-        .floating-tip.hidden { display: none; }
-        
         .floating-tip-bubble {
             width: 48px; height: 48px;
             background: var(--card); backdrop-filter: blur(10px);
@@ -302,7 +314,6 @@
             display: flex; justify-content: center; align-items: center;
             font-size: 1.4rem; cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            position: relative; z-index: 2;
             transition: transform 0.2s, background 0.3s;
         }
         .floating-tip-bubble:hover { transform: scale(1.08); }
@@ -322,17 +333,18 @@
         }
         
         .floating-tip-content {
+            position: absolute;
+            bottom: calc(100% + 12px);
+            right: 0;
+            width: max-content; max-width: calc(100vw - 48px);
             background: var(--card); backdrop-filter: blur(15px);
             border: 1px solid var(--primary);
             padding: 16px 36px 16px 16px;
             border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-            width: max-content; max-width: calc(100vw - 48px);
-            margin-bottom: 12px; font-size: 0.85rem; color: var(--text);
-            position: absolute; bottom: 50px; right: 0;
+            font-size: 0.85rem; color: var(--text);
             transform-origin: bottom right;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            opacity: 1; transform: scale(1); z-index: 1;
-            line-height: 1.5;
+            opacity: 1; transform: scale(1);
         }
         .floating-tip.collapsed .floating-tip-content {
             opacity: 0; transform: scale(0); pointer-events: none;
@@ -346,9 +358,6 @@
         .floating-tip-close:hover { color: var(--danger); }
         .pop-animation { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @media (min-width: 780px) {
-            .floating-tip-content { max-width: 340px; }
-        }
     </style>
 </head>
 <body>
@@ -359,20 +368,19 @@
             <span class="sub" data-zh="Stereo 3D Interaxial Distance Calculator · 工业级多机位推算" data-en="Stereo 3D Interaxial Distance Calculator · Pro Engine">Stereo 3D Interaxial Distance Calculator · 工业级多机位推算</span>
         </div>
         <div class="header-controls">
-            <button class="ctrl-btn" onclick="toggleLang()" id="langBtn">EN</button>
-            <button class="ctrl-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+            <button class="ctrl-btn-icon" onclick="toggleLang()" id="langBtn">EN</button>
+            <button class="ctrl-btn-icon" onclick="toggleTheme()" id="themeBtn">🌙</button>
         </div>
     </div>
 
-    <div class="suggest-banner" id="suggestBanner"></div>
-
     <div class="main-layout">
-        <!-- 左：输入 -->
         <div class="left-panel">
 
-            <!-- 放映屏幕 -->
             <div class="section-card">
-                <div class="section-title">📺 <span data-zh="主放映屏幕 (Main Target)" data-en="Main Target Screen">主放映屏幕 (Main Target)</span></div>
+                <div class="section-title">
+                    📺 ① <span data-zh="主放映屏幕" data-en="Main Target Screen">主放映屏幕</span>
+                    <button class="info-icon" type="button" tabindex="-1">i<span class="info-pop">项目核心交付平台的物理屏幕尺寸，计算安全视差的基准。</span></button>
+                </div>
                 <select id="screenPreset" class="preset-select" onchange="updateScreenInput()">
                     <option value="custom" data-zh="— 自定义 —" data-en="— Custom —">— 自定义 —</option>
                     <optgroup label="专业影院 Cinema">
@@ -393,28 +401,30 @@
                     </optgroup>
                 </select>
                 <div class="form-group" style="margin-bottom:10px">
-                    <label><span data-zh="主屏幕物理宽 (mm)" data-en="Main Screen Width (mm)">主屏幕物理宽 (mm)</span></label>
+                    <label data-zh="主屏幕物理宽 (mm)" data-en="Main Screen Width (mm)">主屏幕物理宽 (mm)</label>
                     <input type="number" id="screenWidth" value="10000" oninput="checkScreenInput()">
                 </div>
                 
-                <div class="checkbox-group" style="margin-bottom:8px">
+                <div class="checkbox-group" style="margin-bottom:0">
                     <input type="checkbox" id="useSecScreen" onchange="toggleSecScreen()">
-                    <label for="useSecScreen" data-zh="启用辅屏计算 (多机位协同)" data-en="Enable Secondary Target (Multi-cam)">启用辅屏计算 (多机位协同)</label>
+                    <label for="useSecScreen">
+                        <span data-zh="启用辅屏计算 (多机位协同)" data-en="Enable Secondary Target (Multi-cam)">启用辅屏计算 (多机位协同)</span>
+                        <button class="info-icon" type="button" tabindex="-1">i<span class="info-pop">生成例如 TV 等次级放映端的独立安全轴距参考</span></button>
+                    </label>
                 </div>
-                <div id="secScreenWrap" style="display:none; padding:12px; background:var(--result-bg); border-radius:11px; margin-bottom:10px;">
-                    <label><span data-zh="辅屏宽度 (mm)" data-en="Secondary Screen Width (mm)">辅屏宽度 (mm)</span><span class="en">例如生成 TV 对应的独立安全轴距</span></label>
+                <div id="secScreenWrap" style="display:none; padding:12px; background:var(--result-bg); border-radius:var(--r-md); margin-top:10px;">
+                    <label data-zh="辅屏宽度 (mm)" data-en="Secondary Screen Width (mm)">辅屏宽度 (mm)</label>
                     <input type="number" id="screen2Width" value="1270" oninput="calculate()">
                 </div>
-
-                <!-- 动态百分比建议 -->
-                <div class="formula-note" id="screenAdvice" style="margin-top:10px;"></div>
             </div>
 
-            <!-- 摄影机参数 -->
             <div class="section-card">
-                <div class="section-title">📷 <span data-zh="摄影机与镜头" data-en="Camera & Lens">摄影机与镜头</span></div>
+                <div class="section-title">📷 ② <span data-zh="摄影机与镜头" data-en="Camera & Lens">摄影机与镜头</span></div>
                 <div class="form-group">
-                    <label><span data-zh="传感器有效宽度 (mm)" data-en="Sensor Width (mm)">传感器有效宽度 (mm)</span></label>
+                    <label>
+                        <span data-zh="传感器有效宽度 (mm)" data-en="Sensor Width (mm)">传感器有效宽度 (mm)</span>
+                        <button class="info-icon" type="button" tabindex="-1">i<span class="info-pop">Full Frame: 36mm · S35: 24.89mm · MFT: 17.3mm<br>决定放大倍率M=屏宽/传感器宽</span></button>
+                    </label>
                     <select id="sensorPreset" class="preset-select" onchange="updateSensorInput()">
                         <option value="custom" data-zh="— 自定义 —" data-en="— Custom —">— 自定义 —</option>
                         <optgroup label="电影机 - 大画幅 (Large Format/65mm)">
@@ -446,11 +456,14 @@
                     <input type="number" id="sensorWidth" value="36.0" step="0.1" oninput="checkSensorInput()">
                 </div>
                 <div class="form-group">
-                    <label><span data-zh="镜头焦距 F (mm)" data-en="Focal Length F (mm)">镜头焦距 F (mm)</span></label>
+                    <label data-zh="镜头焦距 F (mm)" data-en="Focal Length F (mm)">镜头焦距 F (mm)</label>
                     <input type="number" id="focalLength" value="50" oninput="calculate()">
                 </div>
                 <div class="form-group" style="margin-bottom:0">
-                    <label><span data-zh="后期时间线分辨率 (像素宽)" data-en="Timeline Resolution (px wide)">后期时间线分辨率 (像素宽)</span> <span class="en" data-zh="用于计算像素平移量" data-en="Used for HIT calculation">用于计算像素平移量</span></label>
+                    <label>
+                        <span data-zh="后期时间线分辨率 (像素宽)" data-en="Timeline Resolution (px wide)">后期时间线分辨率 (像素宽)</span>
+                        <button class="info-icon" type="button" tabindex="-1">i<span class="info-pop">用于推算后期 HIT 像素平移量。4K UHD为3840，DCI 4K为4096</span></button>
+                    </label>
                     <select id="resPreset" class="preset-select" onchange="updateResInput()">
                         <option value="custom" data-zh="— 自定义 —" data-en="— Custom —">— 自定义 —</option>
                         <optgroup label="4K / UHD">
@@ -468,27 +481,38 @@
                 </div>
             </div>
 
-            <!-- 景深几何 -->
             <div class="section-card">
-                <div class="section-title">🗺️ <span data-zh="场景景深几何 N–S–L" data-en="Depth Geometry N–S–L">场景景深几何 N–S–L</span></div>
+                <div class="section-title">🗺️ ③ <span data-zh="场景景深结构 N–S–L" data-en="Depth Geometry N–S–L">场景景深结构 N–S–L</span></div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label><span data-zh="🌷 最近景物 N (米)" data-en="🌷 Near Distance N (m)">🌷 最近景物 N (米)</span><span class="en">Near Object (前景)</span></label>
+                        <label>
+                            <span data-zh="🌷 最近景物 N (米)" data-en="🌷 Near Distance N (m)">🌷 最近景物 N (米)</span>
+                            <button class="info-icon" type="button" tabindex="-1">i<span class="info-pop">画面中最靠前、最靠近镜头的物理表面距离</span></button>
+                        </label>
                         <input type="number" id="nearestDist" value="2" step="0.1" oninput="syncNS('N'); calculate()">
                     </div>
                     <div class="form-group">
-                        <label><span data-zh="👤 零视差面 S (米)" data-en="👤 Zero Parallax Plane S (m)">👤 零视差面 S (米)</span><span class="en">ZPS / Screen Plane (屏幕平面)</span></label>
+                        <label>
+                            <span data-zh="👤 零视差面 S (米)" data-en="👤 ZPS (m)">👤 零视差面 S (米)</span>
+                            <button class="info-icon" type="button" tabindex="-1">i<span class="info-pop">ZPS / Screen Plane，画面在银幕上齐平的汇聚点（通常为主体位置）</span></button>
+                        </label>
                         <input type="number" id="subjectDist" value="4" step="0.1" oninput="syncNS('S'); calculate()">
                     </div>
                 </div>
                 <div class="checkbox-group" style="margin-bottom:12px; margin-top:-8px;">
                     <input type="checkbox" id="bindNS" onchange="syncNS('bind'); calculate()">
-                    <label for="bindNS" data-zh="🔒 锁定：主体即最近景 (N=S，无出屏绝对安全)" data-en="🔒 Lock: Subject is Nearest (N=S, Safe Window)">🔒 锁定：主体即最近景 (N=S，无出屏绝对安全)</label>
+                    <label for="bindNS">
+                        <span data-zh="🔒 锁定：主体即最近景 (N=S)" data-en="🔒 Lock: Subject is Nearest (N=S)">🔒 锁定：主体即最近景 (N=S)</span>
+                        <button class="info-icon" type="button" tabindex="-1">i<span class="info-pop">强制无出屏，一种完美的深景窗户式构图，可绝对避免边缘截断违例</span></button>
+                    </label>
                 </div>
                 <div class="form-group" style="margin-bottom:4px">
-                    <label><span data-zh="⛰️ 最远景物 L (米)" data-en="⛰️ Far Distance L (m)">⛰️ 最远景物 L (米)</span><span class="en">Far Background (背景)</span></label>
+                    <label>
+                        <span data-zh="⛰️ 最远景物 L (米)" data-en="⛰️ Far Distance L (m)">⛰️ 最远景物 L (米)</span>
+                        <button class="info-icon" type="button" tabindex="-1">i<span class="info-pop">画面中能看清的最远背景距离，影响深景入屏极限</span></button>
+                    </label>
                     <input type="number" id="largestDist" value="10" step="0.1" oninput="calculate()">
-                    <div id="davisAlert">⚠ Davis 保护已介入：为防止背景超限，推演已强制使用内部安全值。</div>
+                    <div id="davisAlert" style="display:none; color:var(--warning); font-size:0.85rem; margin-top:6px; font-weight:700;"></div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="isInfinity" onchange="toggleInfinity()">
                         <label for="isInfinity" data-zh="背景无限远 ∞" data-en="Background Infinity ∞">背景无限远 ∞</label>
@@ -496,73 +520,72 @@
                 </div>
             </div>
 
-            <!-- 高级视差引擎 -->
-            <button class="accordion-btn" onclick="toggleAccordion('advSettings')">
-                <span>⚙️ <span data-zh="高级视差安全预算" data-en="Advanced Parallax Budget">高级视差安全预算</span></span>
-                <span id="advSettings_icon">▼</span>
-            </button>
-            <div class="accordion-content" id="advSettings">
-                <div class="formula-note" style="margin-bottom:14px;">
-                    <b>正视差(背景)上限:</b> min(瞳距 63.5mm, 屏幕宽 × 2%) <code>Positive ≤ min(IPD, W×2%)</code><br>
-                    <b>负视差(前景)上限:</b> 屏幕宽 × 1%（或正视差的 50%）<code>Negative ≤ W×1%</code><br>
-                    大型银幕（>8m）正视差应降至 0.5–1%；IMAX 更保守
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-size:0.85rem; font-weight:700; color:var(--primary);" id="budgetStatus" data-zh="✨ [预算已自动匹配主屏幕]" data-en="✨ [Auto-matched to Main Screen]">✨ [预算已自动匹配主屏幕]</span>
-                    <button class="ctrl-btn" style="padding:4px 10px; font-size:0.75rem; display:none;" onclick="resetBudgetAuto()" id="btnResetBudget" data-zh="↺ 恢复自动" data-en="↺ Reset Auto">↺ 恢复自动</button>
-                </div>
-                <div class="form-row" style="margin-bottom:10px">
-                    <div class="form-group">
-                        <label><span data-zh="正视差上限 (%屏幕宽)" data-en="Positive Parallax (% screen)">正视差上限 (%屏幕宽)</span><span class="en">Sky/BBC 推荐: 2%; IMAX: 0.5%</span></label>
-                        <input type="number" id="posPercent" value="1.0" step="0.1" min="0.1" max="5" oninput="overrideBudget(); calculate()">
+            <div class="accordion-card">
+                <button class="accordion-btn" onclick="toggleAccordion('advSettings')">
+                    <span>⚙️ <span data-zh="高级视差安全预算" data-en="Advanced Parallax Budget">高级视差安全预算</span></span>
+                    <span id="advSettings_icon">▼</span>
+                </button>
+                <div class="accordion-content" id="advSettings">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="font-size:0.85rem; font-weight:700; color:var(--primary);" id="budgetStatus" data-zh="✨ [预算已自动匹配主屏幕]" data-en="✨ [Auto-matched to Main Screen]">✨ [预算已自动匹配主屏幕]</span>
+                        <button class="ctrl-btn-icon" style="width:auto; height:28px; padding:0 12px; border-radius:14px; font-size:0.75rem; display:none;" onclick="resetBudgetAuto()" id="btnResetBudget" data-zh="↺ 恢复自动" data-en="↺ Reset Auto">↺ 恢复自动</button>
                     </div>
-                    <div class="form-group">
-                        <label><span data-zh="负视差上限 (%屏幕宽)" data-en="Negative Parallax (% screen)">负视差上限 (%屏幕宽)</span><span class="en">Sky/BBC 推荐: 1%</span></label>
-                        <input type="number" id="negPercent" value="0.5" step="0.1" min="0.1" max="3" oninput="overrideBudget(); calculate()">
-                    </div>
-                    <div class="form-group">
-                        <label><span data-zh="硬锁 IPD 瞳距上限 (mm)" data-en="Hard Limit IPD (mm)">硬锁 IPD 瞳距上限 (mm)</span><span class="en" data-zh="绝对不可超出此值，防爆眼" data-en="Never exceed this. Typical: 60">绝对不可超出此值，防爆眼</span></label>
-                        <input type="number" id="ipdLimit" value="60.0" step="0.1" oninput="calculate()">
-                    </div>
-                </div>
-                <div class="checkbox-group" style="margin-bottom:8px">
-                    <input type="checkbox" id="autoNegRatio" onchange="calculate()">
-                    <label for="autoNegRatio" data-zh="负视差自动收紧至正视差的 50%" data-en="Auto-tighten negative to 50% of positive">负视差自动收紧至正视差的 50%（若需强出屏请勿勾选）</label>
-                </div>
-                <div class="checkbox-group" style="margin-bottom:8px">
-                    <input type="checkbox" id="useDavis" checked onchange="calculate()">
-                    <label for="useDavis" data-zh="Davis 保护：强制 L ≥ 2N（防背景爆眼）" data-en="Davis rule: enforce L ≥ 2N (prevent divergence)">Davis 保护：强制 L ≥ 2N（防背景眼肌撕扯）</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="useAngular" onchange="toggleAngularMode()">
-                    <label for="useAngular" data-zh="启用角视差二次钳制（巨幕/IMAX 必备）" data-en="Enable angular parallax check (IMAX/large screen)">启用角视差二次钳制（巨幕/IMAX 必备）</label>
-                </div>
-                <div id="modeAngular" style="display:none; margin-top:10px; padding:12px; background:rgba(0,122,255,0.06); border-radius:11px;">
-                    <div class="form-row" style="margin-bottom:0">
-                        <div class="form-group" style="margin-bottom:0">
-                            <label><span data-zh="观众观看距离 D (米)" data-en="Viewing Distance D (m)">观众观看距离 D (米)</span><span class="en">典型值: 影院约 1.5×屏幕高</span></label>
-                            <input type="number" id="viewingDist" value="10" step="0.1" oninput="calculate()">
+                    <div class="form-row" style="margin-bottom:12px">
+                        <div class="form-group">
+                            <label>
+                                <span data-zh="正视差上限 (%宽)" data-en="Pos Parallax (%)">正视差上限 (%宽)</span>
+                            </label>
+                            <input type="number" id="posPercent" value="1.0" step="0.1" min="0.1" max="5" oninput="overrideBudget(); calculate()">
                         </div>
-                        <div class="form-group" style="margin-bottom:0">
-                            <label><span data-zh="最大允许角视差 θ (°)" data-en="Max Angular Parallax θ (°)">最大允许角视差 θ (°)</span><span class="en">推荐 ≤ 1.5°；IMAX ≤ 1°</span></label>
-                            <input type="number" id="maxAngle" value="1.5" step="0.1" oninput="calculate()">
+                        <div class="form-group">
+                            <label>
+                                <span data-zh="负视差上限 (%宽)" data-en="Neg Parallax (%)">负视差上限 (%宽)</span>
+                            </label>
+                            <input type="number" id="negPercent" value="0.5" step="0.1" min="0.1" max="3" oninput="overrideBudget(); calculate()">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <span data-zh="硬锁 IPD (mm)" data-en="Hard IPD (mm)">硬锁 IPD (mm)</span>
+                            </label>
+                            <input type="number" id="ipdLimit" value="60.0" step="0.1" oninput="calculate()">
+                        </div>
+                    </div>
+                    <div class="checkbox-group" style="margin-bottom:10px">
+                        <input type="checkbox" id="autoNegRatio" onchange="calculate()">
+                        <label for="autoNegRatio" data-zh="负视差自动收紧至正视差的 50%" data-en="Auto-tighten negative to 50%">负视差自动收紧至正视差的 50%</label>
+                    </div>
+                    <div class="checkbox-group" style="margin-bottom:10px">
+                        <input type="checkbox" id="useDavis" checked onchange="calculate()">
+                        <label for="useDavis" data-zh="Davis 法则保护" data-en="Davis Rule enforce L ≥ 2N">Davis 法则保护</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="useAngular" onchange="toggleAngularMode()">
+                        <label for="useAngular" data-zh="启用角视差二次钳制（巨幕必备）" data-en="Enable angular parallax check">启用角视差二次钳制（巨幕必备）</label>
+                    </div>
+                    <div id="modeAngular" style="display:none; margin-top:12px; padding:16px; background:var(--result-bg); border-radius:var(--r-md);">
+                        <div class="form-row" style="margin-bottom:0">
+                            <div class="form-group" style="margin-bottom:0">
+                                <label data-zh="观众观看距离 D (米)" data-en="Viewing Distance D (m)">观众观看距离 D (米)</label>
+                                <input type="number" id="viewingDist" value="10" step="0.1" oninput="calculate()">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0">
+                                <label data-zh="最大允许角视差 θ (°)" data-en="Max Angular Parallax θ (°)">最大允许角视差 θ (°)</label>
+                                <input type="number" id="maxAngle" value="1.5" step="0.1" oninput="calculate()">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- 右：结果 -->
-        <div class="right-panel" style="display:flex; flex-direction:column; gap:16px;">
+        <div class="right-panel" style="display:flex; flex-direction:column;">
 
-            <!-- 场景预览 -->
             <div class="visualizer-section">
-                <label style="margin-bottom:0; font-size:0.88rem; font-weight:700; color:var(--label);">
-                    📏 <span data-zh="场景深度预演（可拖拽）" data-en="Depth Preview (draggable)">场景深度预演（可拖拽）</span>
+                <label style="margin-bottom:0; font-size:1rem; font-weight:800; color:var(--text);">
+                    📏 <span data-zh="景深预览（可拖拽）" data-en="Depth Preview (draggable)">景深预览（可拖拽）</span>
                 </label>
                 <div class="visualizer-container" id="visContainer">
-                    <div class="vis-track-container" id="visTrackContainer" style="left: 10px; right: 10px;">
+                    <div class="vis-track-container" id="visTrackContainer">
                         <div class="vis-track"></div>
                         <div class="vis-marker vis-n" id="visN">🌷<div class="vis-label" id="visLabelN">2.0m</div></div>
                         <div class="vis-marker vis-s" id="visS">👤<div class="vis-label" id="visLabelS">4.0m</div></div>
@@ -571,29 +594,30 @@
                 </div>
             </div>
 
-            <!-- 主结果 -->
             <div class="result-box">
-                <div class="result-main">
-                    <div class="result-label" data-zh="极限安全轴距 (Max Safe IA)" data-en="Max Safe Camera Base (IA)">极限安全轴距 (Max Safe IA)</div>
-                    <div><span class="result-num" id="resMaxBase" style="font-size: 1.6rem; color: var(--label);">0.00</span><span class="result-unit">mm</span></div>
-                    
-                    <div style="margin-top: 14px; padding: 16px; background: var(--card); border: 2px solid var(--primary); border-radius: 14px; box-shadow: 0 4px 12px rgba(0,122,255,0.15);">
-                        <div class="result-label" style="color: var(--primary); font-weight: 800; font-size: 0.95rem; margin-bottom: 12px;">🎬 <span data-zh="现场实际架设轴距 (Applied IA)" data-en="Applied IA (Actual Base)">现场实际架设轴距 (Applied IA)</span></div>
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
-                            <input type="range" id="appliedIASlider" min="0" max="200" step="0.1" value="0" style="flex:1; accent-color: var(--primary);" oninput="document.getElementById('appliedIAInput').value=this.value; updateActuals();">
-                            <input type="number" id="appliedIAInput" value="0.00" step="0.1" style="width: 90px; text-align: center; font-size: 1.5rem; font-weight: 900; color: var(--primary); background: transparent; border: none; border-bottom: 2px solid var(--border); border-radius: 0; padding: 2px;" oninput="document.getElementById('appliedIASlider').value=this.value; updateActuals();">
-                            <span class="result-unit" style="font-weight: 700; color: var(--text);">mm</span>
-                        </div>
-                    </div>
-                    
-                    <div id="resSecWrap" style="display:none; margin-top: 14px; background: rgba(255,255,255,0.3); padding: 8px; border-radius: 8px;">
-                        <span style="font-size: 1.4rem; font-weight: 800; color: var(--primary);" id="resBaseSec">0.00</span><span class="result-unit" style="font-size: 0.8rem;">mm</span>
-                        <div class="result-label" style="font-size: 0.75rem; margin-top: 2px;" data-zh="辅屏对应安全轴距 (Secondary Target IA)" data-en="Secondary Target Safe Base (IA)">辅屏对应安全轴距 (Secondary Target IA)</div>
-                    </div>
+                <div class="result-label" data-zh="极限安全轴距 (Max Safe IA)" data-en="Max Safe Camera Base (IA)">极限安全轴距 (Max Safe IA)</div>
+                <div><span class="result-num" id="resMaxBase">0.00</span><span class="result-unit">mm</span></div>
+                
+                <div id="resSecWrap" style="display:none; margin-top: 16px; background: var(--bg); padding: 10px 16px; border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--border);">
+                    <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary);" id="resBaseSec">0.00</span><span class="result-unit" style="font-size: 0.85rem;">mm</span>
+                    <div class="result-label" style="font-size: 0.75rem; margin-top: 4px; margin-bottom: 0;" data-zh="辅屏对应安全轴距" data-en="Secondary Target IA">辅屏对应安全轴距</div>
                 </div>
+            </div>
 
-                <!-- 视差预算可视条 -->
-                <div class="budget-bar-wrap">
+            <div class="applied-ia-card">
+                <div class="applied-ia-header">
+                    🎬 <span data-zh="现场实际架设轴距 (Applied IA)" data-en="Applied IA (Actual Setting)">现场实际架设轴距 (Applied IA)</span>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
+                    <div style="position: relative; flex: 1; display: flex; align-items: center;">
+                        <input type="range" id="appliedIASlider" min="0" step="0.1" value="0" style="width: 100%; position: relative; z-index: 2; accent-color: var(--primary);" oninput="document.getElementById('appliedIAInput').value=this.value; updateActuals();">
+                        <div id="maxSafeMarker" style="position: absolute; width: 4px; height: 18px; background: var(--success); border-radius:2px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 1;"></div>
+                    </div>
+                    <input type="number" id="appliedIAInput" value="0.00" step="0.1" style="width: 96px; text-align: center; font-size: 1.5rem; font-weight: 900; background: transparent; border: none; border-bottom: 2px solid var(--border); border-radius: 0; padding: 4px; transition: color 0.3s;" oninput="document.getElementById('appliedIASlider').value=this.value; updateActuals();">
+                    <span class="result-unit" style="font-weight: 700; color: var(--text);">mm</span>
+                </div>
+                
+                <div class="budget-bar-wrap" style="margin-top: 24px;">
                     <div class="actual-labels">
                         <span style="color:var(--danger)"><span data-zh="实际出屏:" data-en="Act Neg:">实际出屏:</span> <span id="actNegVal">0.0</span> mm</span>
                         <span style="color:var(--text); font-size:0.75rem;"><span data-zh="总视差(厚度):" data-en="Total Depth:">总视差(厚度):</span> <span id="actTotalVal">0.0</span> mm</span>
@@ -603,225 +627,158 @@
                         <div class="limit-wrap-neg" id="wrapNeg" style="width:50%"><div class="fill-neg" id="fillNeg" style="width:0%"></div></div>
                         <div class="limit-wrap-pos" id="wrapPos" style="width:50%"><div class="fill-pos" id="fillPos" style="width:0%"></div></div>
                     </div>
-                    <div class="budget-labels">
-                        <span><span data-zh="负极限(出屏)" data-en="Neg Lim">负极限(出屏)</span> <span id="limNegVal">0</span> mm</span>
-                        <span><span data-zh="正极限(入屏)" data-en="Pos Lim">正极限(入屏)</span> <span id="limPosVal">0</span> mm</span>
-                    </div>
+                    <div id="budgetOverflowHint" style="display:none; color: var(--danger); font-size: 0.85rem; margin-top: 10px; font-weight: 600; text-align: center;"></div>
                 </div>
-
-                <!-- 二维俯视预演 -->
-                <div style="margin-top: 24px; border-top: 1px dashed var(--border); padding-top: 16px;">
-                    <label style="margin-bottom:12px; font-size:0.88rem; font-weight:700; color:var(--label); display:flex; justify-content:space-between; align-items:center;">
-                        <span>🚁 <span data-zh="光路与视差安全边界推演" data-en="Optical Ray & Parallax Bounds">光路与视差安全边界推演</span></span>
-                        <span style="font-size:0.7rem; font-weight:400; background:var(--adv-bg); padding:2px 6px; border-radius:4px;" data-zh="物理比例动态网格" data-en="True Scale Dynamic Grid">物理比例动态网格</span>
-                    </label>
-                    <div style="width:100%; height:180px; background:var(--bg); border:1px solid var(--border); border-radius:10px; position:relative; overflow:hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);">
-                        <svg id="topDownSvg" style="width:100%; height:100%; display:block;"></svg>
-                    </div>
-                </div>
-
-                <!-- 精简的网格：专注后期 HIT -->
-                <div class="result-grid">
-                    <div class="result-cell">
-                        <div class="rc-label" data-zh="后期 HIT 平移 (mm)" data-en="Post HIT Shift (mm)">后期 HIT 平移 (mm)</div>
-                        <div class="rc-val" id="resHitMm" style="color:var(--success)">—</div>
-                    </div>
-                    <div class="result-cell">
-                        <div class="rc-label" data-zh="像素平移量 (每眼)" data-en="Pixel Shift (per eye)">像素平移量 (每眼)</div>
-                        <div class="rc-val" id="resHitPx" style="color:var(--success)">—</div>
-                    </div>
-                </div>
-
-                <!-- 降级的分析信息 -->
-                <div class="analysis-box" id="resAnalysis"></div>
-                <div id="rigHint" class="rig-hint"></div>
             </div>
 
-            <!-- 联通单 -->
-            <button class="accordion-btn" onclick="toggleAccordion('terminalPanel')">
-                <span>📋 <span data-zh="现场参数联通单" data-en="On-set Parameter Report">现场参数联通单</span></span>
-                <span id="terminalPanel_icon">▼</span>
-            </button>
-            <div class="accordion-content" id="terminalPanel" style="padding:0; background:transparent; border:none; margin-bottom:0;">
-                <textarea id="textReportBox" class="terminal-box" readonly></textarea>
-                <button class="btn-primary" onclick="copyTextReport()"><span data-zh="复制联通单 Copy Report" data-en="Copy Report to Clipboard">复制联通单 Copy Report</span></button>
+            <div class="section-card">
+                <label style="margin-bottom:16px; font-size:1rem; font-weight:800; color:var(--text); display:flex; justify-content:space-between; align-items:center;">
+                    <span>🚁 <span data-zh="俯视光路图" data-en="Optical Ray & Parallax Bounds">俯视光路图</span></span>
+                    <span style="font-size:0.75rem; font-weight:600; background:var(--bg); color:var(--label); padding:4px 8px; border-radius:var(--r-sm); border:1px solid var(--border);" data-zh="概念示意图" data-en="Schematic Diagram">概念示意图</span>
+                </label>
+                <div style="display:flex; flex-wrap:wrap; gap:16px; font-size:0.75rem; color:var(--text); font-weight:600; margin-bottom:12px;">
+                    <span style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--danger); border-radius:3px;"></span> <span data-zh="最近景 N" data-en="Near N">最近景 N</span></span>
+                    <span style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--text); border-radius:3px;"></span> <span data-zh="主体 S (ZPS)" data-en="Subject S">主体 S (ZPS)</span></span>
+                    <span style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--primary); border-radius:3px;"></span> <span data-zh="最远景 L" data-en="Far L">最远景 L</span></span>
+                </div>
+                <div style="width:100%; height:260px; background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); position:relative; overflow:hidden; box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);">
+                    <svg id="topDownSvg" style="width:100%; height:100%; display:block;"></svg>
+                </div>
             </div>
 
-            <!-- 视觉卡片 -->
-            <button class="accordion-btn" onclick="toggleAccordion('visualCardPanel')">
-                <span>📸 <span data-zh="导出数据海报" data-en="Export Data Poster">导出数据海报</span></span>
-                <span id="visualCardPanel_icon">▼</span>
-            </button>
-            <div class="accordion-content" id="visualCardPanel" style="padding-left:0; padding-right:0;">
-                <div class="report-card-wrapper" id="cardWrapper">
-                    <div class="report-card" id="visualCardNode">
-                        <div class="rc-header">
-                            <div class="rc-title" data-zh="3D 立体参数海报" data-en="STEREOSCOPIC DATA">STEREOSCOPIC DATA</div>
-                            <div class="rc-subtitle" id="vr-timestamp"></div>
-                        </div>
-                        <div class="rc-body">
-                            <div class="rc-final-box">
-                                <div class="rc-final-label" data-zh="主屏最大轴距 OPTIMAL BASE (IA)" data-en="OPTIMAL BASE (IA)">主屏最大轴距 OPTIMAL BASE (IA)</div>
-                                <div class="rc-final-value" id="vr-base">0.00 mm</div>
-                                <!-- 辅屏轴距显示容器 -->
-                                <div class="rc-final-sub" id="vr-sec-base" style="color:#34c759; font-weight: 600;">Sec IA: N/A</div>
-                            </div>
-                            
-                            <div class="rc-section-title" data-zh="硬件与系统 Hardware & System" data-en="HARDWARE & SYSTEM">硬件与系统 Hardware & System</div>
-                            <div class="rc-grid">
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="主屏宽 Main Screen" data-en="Main Screen">主屏宽 Main Screen</span><span class="rc-value" id="vr-screen">0 mm</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="传感器 Sensor" data-en="Sensor Width">传感器 Sensor</span><span class="rc-value" id="vr-sensor">0 mm</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="焦距 Focal L." data-en="Focal Length">焦距 Focal L.</span><span class="rc-value" id="vr-focal">0 mm</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="放大倍率 Mag. (M)" data-en="Magnification (M)">放大倍率 Mag. (M)</span><span class="rc-value" id="vr-mag">0x</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="时间线 Timeline" data-en="Timeline Res">时间线 Timeline</span><span class="rc-value" id="vr-res">0 px</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="瞳距极限 IPD Limit" data-en="IPD Limit">瞳距极限 IPD Limit</span><span class="rc-value" id="vr-ipd">0 mm</span></div>
-                                </div>
-                            </div>
+            <div class="result-grid">
+                <div class="result-cell">
+                    <div class="rc-label" data-zh="后期 HIT 平移 (mm)" data-en="Post HIT Shift (mm)">后期 HIT 平移 (mm)</div>
+                    <div class="rc-val" id="resHitMm" style="color:var(--success)">—</div>
+                </div>
+                <div class="result-cell">
+                    <div class="rc-label" data-zh="像素平移量 (每眼)" data-en="Pixel Shift (per eye)">像素平移量 (每眼)</div>
+                    <div class="rc-val" id="resHitPx" style="color:var(--success)">—</div>
+                </div>
+            </div>
 
-                            <div class="rc-section-title" data-zh="主屏视差预算 Parallax Budget" data-en="MAIN PARALLAX BUDGET">主屏视差预算 Parallax Budget</div>
-                            <div class="rc-grid">
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M21 3v6M21 3h-6M21 3l-7 7M3 21v-6M3 21h6M3 21l7-7"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="实际入屏 Act Pos." data-en="Actual Positive">实际入屏 Act Pos.</span><span class="rc-value" id="vr-pos">0 mm</span><span style="font-size:0.65rem; color:#888;" id="vr-pos-lim">Lim: 0</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" viewBox="0 0 24 24"><path d="M4 14v7h7M4 21l7-7M20 10V3h-7M20 3l-7 7"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="实际出屏 Act Neg." data-en="Actual Negative">实际出屏 Act Neg.</span><span class="rc-value" id="vr-neg">0 mm</span><span style="font-size:0.65rem; color:#888;" id="vr-neg-lim">Lim: 0</span></div>
-                                </div>
-                            </div>
-                            
-                            <div class="rc-section-title" data-zh="深度几何 N–S–L" data-en="DEPTH GEOMETRY">深度几何 N–S–L</div>
-                            <div class="rc-grid">
-                                <div class="rc-item">
-                                    <svg class="rc-icon" style="stroke:#ff3b30" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M3 12h6M15 12h6M12 3v6M12 15v6"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="最近 Near N" data-en="Near (N)">最近 Near N</span><span class="rc-value" id="vr-n">0 m</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" style="stroke:#0a84ff" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="零视差 ZPS S" data-en="ZPS (S)">零视差 ZPS S</span><span class="rc-value" id="vr-zps-geom">0 m</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" style="stroke:#34c759" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="最远 Far L" data-en="Far (L)">最远 Far L</span><span class="rc-value" id="vr-l">0 m</span></div>
-                                </div>
-                                <div class="rc-item">
-                                    <svg class="rc-icon" style="stroke:#ff9f0a" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                                    <div class="rc-data-col"><span class="rc-label-small" data-zh="1/30参考 Ref" data-en="1/30 Rule Ref">1/30参考 Ref</span><span class="rc-value" id="vr-one-thirty">0 mm</span></div>
-                                </div>
-                            </div>
+            <div class="analysis-box" id="resAnalysis"></div>
+            <div id="rigHint" class="rig-hint"></div>
 
-                            <div class="rc-section-title" id="vr-bottleneck-title">后期合成 Post Shift</div>
-                            <div class="rc-hit-box">
-                                <div>
-                                    <div style="font-size:0.72rem; color:#aaa; margin-bottom:4px;"><span data-zh="主体回拉 HIT 平移" data-en="HIT Physical Shift">主体回拉 HIT 平移</span> <span id="vr-hit-mm" style="color:#fff; font-weight:700;">0.000mm</span></div>
-                                    <div style="font-size:0.85rem; color:#eee;" id="vr-shift">L→0px | R←0px</div>
+            <div class="accordion-card" style="margin-top:24px;">
+                <button class="accordion-btn" onclick="toggleAccordion('terminalPanel')">
+                    <span>📋 <span data-zh="现场参数联通单" data-en="On-set Parameter Report">现场参数联通单</span></span>
+                    <span id="terminalPanel_icon">▼</span>
+                </button>
+                <div class="accordion-content" id="terminalPanel">
+                    <textarea id="textReportBox" class="terminal-box" readonly></textarea>
+                    
+                    <div style="display:flex; gap:8px; margin-bottom:12px;">
+                        <button class="btn-primary" onclick="copyTextReport()"><span data-zh="📋 复制联通单" data-en="📋 Copy Report">📋 复制联通单</span></button>
+                        <button class="btn-primary" style="background:var(--adv-bg); color:var(--text); border:1px solid var(--border);" onclick="toggleImportBox()"><span data-zh="📥 导入单据" data-en="📥 Import Report">📥 导入单据</span></button>
+                    </div>
+                    
+                    <div id="importBox" style="display:none; padding:16px; background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:12px;">
+                        <label style="font-size:0.85rem; margin-bottom:8px;" data-zh="在此粘贴联通单文本：" data-en="Paste report text here:">在此粘贴联通单文本：</label>
+                        <textarea id="importText" class="terminal-box" style="height:120px; background:var(--input-bg); color:var(--text); border:1px solid var(--primary); margin-top:0;" placeholder="===== 3D 现场拍摄联通单 ===== ..."></textarea>
+                        <button class="btn-primary" style="background:var(--success);" onclick="parseReport()"><span data-zh="解析并应用参数" data-en="Parse & Apply Settings">解析并应用参数</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-card">
+                <button class="accordion-btn" onclick="toggleAccordion('visualCardPanel')">
+                    <span>📸 <span data-zh="导出数据海报" data-en="Export Data Poster">导出数据海报</span></span>
+                    <span id="visualCardPanel_icon">▼</span>
+                </button>
+                <div class="accordion-content" id="visualCardPanel">
+                    <div class="report-card-wrapper" id="cardWrapper">
+                        <div class="report-card" id="visualCardNode">
+                            <div class="rc-header">
+                                <div class="rc-title" data-zh="3D 立体参数海报" data-en="STEREOSCOPIC DATA">STEREOSCOPIC DATA</div>
+                                <div class="rc-subtitle" id="vr-timestamp"></div>
+                            </div>
+                            <div class="rc-body">
+                                <div class="rc-final-box">
+                                    <div class="rc-final-label" data-zh="主屏最大轴距 OPTIMAL BASE (IA)" data-en="OPTIMAL BASE (IA)">主屏最大轴距 OPTIMAL BASE (IA)</div>
+                                    <div class="rc-final-value" id="vr-base">0.00 mm</div>
+                                    <div class="rc-final-sub" id="vr-sec-base" style="color:#34c759; font-weight: 600;">Sec IA: N/A</div>
                                 </div>
-                                <div class="rc-hit-val" id="vr-hit-px">0 px</div>
+                                
+                                <div class="rc-section-title" data-zh="硬件与系统 Hardware & System" data-en="HARDWARE & SYSTEM">硬件与系统 Hardware & System</div>
+                                <div class="rc-grid">
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="主屏宽 Main Screen" data-en="Main Screen">主屏宽 Main Screen</span><span class="rc-value" id="vr-screen">0 mm</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="传感器 Sensor" data-en="Sensor Width">传感器 Sensor</span><span class="rc-value" id="vr-sensor">0 mm</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="焦距 Focal L." data-en="Focal Length">焦距 Focal L.</span><span class="rc-value" id="vr-focal">0 mm</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="放大倍率 Mag. (M)" data-en="Magnification (M)">放大倍率 Mag. (M)</span><span class="rc-value" id="vr-mag">0x</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="时间线 Timeline" data-en="Timeline Res">时间线 Timeline</span><span class="rc-value" id="vr-res">0 px</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="瞳距极限 IPD Limit" data-en="IPD Limit">瞳距极限 IPD Limit</span><span class="rc-value" id="vr-ipd">0 mm</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="rc-section-title" data-zh="主屏视差预算 Parallax Budget" data-en="MAIN PARALLAX BUDGET">主屏视差预算 Parallax Budget</div>
+                                <div class="rc-grid">
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" viewBox="0 0 24 24"><path d="M21 3v6M21 3h-6M21 3l-7 7M3 21v-6M3 21h6M3 21l7-7"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="实际入屏 Act Pos." data-en="Actual Positive">实际入屏 Act Pos.</span><span class="rc-value" id="vr-pos">0 mm</span><span style="font-size:0.65rem; color:#888;" id="vr-pos-lim">Lim: 0</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" viewBox="0 0 24 24"><path d="M4 14v7h7M4 21l7-7M20 10V3h-7M20 3l-7 7"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="实际出屏 Act Neg." data-en="Actual Negative">实际出屏 Act Neg.</span><span class="rc-value" id="vr-neg">0 mm</span><span style="font-size:0.65rem; color:#888;" id="vr-neg-lim">Lim: 0</span></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="rc-section-title" data-zh="景深结构 N–S–L" data-en="DEPTH GEOMETRY">景深结构 N–S–L</div>
+                                <div class="rc-grid">
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" style="stroke:#ff3b30" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M3 12h6M15 12h6M12 3v6M12 15v6"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="最近 Near N" data-en="Near (N)">最近 Near N</span><span class="rc-value" id="vr-n">0 m</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" style="stroke:#0a84ff" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="零视差 ZPS S" data-en="ZPS (S)">零视差 ZPS S</span><span class="rc-value" id="vr-zps-geom">0 m</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" style="stroke:#34c759" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="最远 Far L" data-en="Far (L)">最远 Far L</span><span class="rc-value" id="vr-l">0 m</span></div>
+                                    </div>
+                                    <div class="rc-item">
+                                        <svg class="rc-icon" style="stroke:#ff9f0a" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                        <div class="rc-data-col"><span class="rc-label-small" data-zh="1/30参考 Ref" data-en="1/30 Rule Ref">1/30参考 Ref</span><span class="rc-value" id="vr-one-thirty">0 mm</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="rc-section-title" id="vr-bottleneck-title" data-zh="后期 HIT 平移用量与安全余量" data-en="Post HIT Shift — Usage & Headroom">后期 HIT 平移用量与安全余量</div>
+                                <div class="rc-hit-box" style="flex-wrap: wrap;">
+                                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <div style="font-size:0.75rem; color:#aaa; margin-bottom:4px; font-weight:600;"><span data-zh="主体回拉 HIT 平移" data-en="HIT Physical Shift">主体回拉 HIT 平移</span> <span id="vr-hit-mm" style="color:#fff; font-weight:800;">0.000mm</span></div>
+                                            <div style="font-size:0.85rem; color:#eee; font-weight:600;" id="vr-shift">L→0px | R←0px</div>
+                                        </div>
+                                        <div class="rc-hit-val" id="vr-hit-px" style="font-size: 1.15rem; font-weight: 800; color: #fff;">0 px</div>
+                                    </div>
+                                    <div style="width: 100%; font-size:0.75rem; color:#aaa; margin-top:8px; border-top:1px solid rgba(255,255,255,0.07); padding-top:8px;">
+                                        <span id="vr-hit-range" style="font-weight:700; font-size:0.85rem; line-height: 1.5;">—</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div style="padding: 0 14px;">
-                    <button class="btn-primary btn-secondary" onclick="downloadVisualCard()" style="margin-top:14px;">
+                    <button class="btn-primary" onclick="downloadVisualCard()" style="margin-top:16px;">
                         <span data-zh="↓ 导出高清海报 Export HD Poster" data-en="↓ Export HD Poster">↓ 导出高清海报 Export HD Poster</span>
                     </button>
-                </div>
-            </div>
-
-            <!-- 术语与公式 -->
-            <button class="accordion-btn" onclick="toggleAccordion('glossaryPanel')">
-                <span>📖 <span data-zh="名词解释与公式推导" data-en="Glossary & Formula Derivation">名词解释与公式推导</span></span>
-                <span id="glossaryPanel_icon">▼</span>
-            </button>
-            <div class="accordion-content" id="glossaryPanel">
-                <div class="glossary-item">
-                    <div class="glossary-term">轴距 IA (Interaxial Distance)</div>
-                    <div class="glossary-def">两摄影机镜头光轴之间的物理水平距离，即"立体基线"。IA 越大立体感越强，但超限则导致视觉疲劳或爆眼。</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">总视差预算 (Total Parallax Budget / Depth Range)</div>
-                    <div class="glossary-def">正视差与负视差绝对值之和，代表整个场景在屏幕上呈现的 3D 厚度空间。行业（如 Sky 3D 规范）建议总视差尽量控制在屏幕宽度的 <b>2% ~ 3%</b> 以内，避免让观众的眼球在远近之间来回剧烈调焦引发疲劳。</div>
-                    <div class="glossary-formula">P_total = P_pos + P_neg = B × F × M × (1/N - 1/L)</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">零视差面 ZPS (Zero Parallax Plane / Screen Plane)</div>
-                    <div class="glossary-def">画面中与银幕平齐、左右眼无视差的深度平面。主体通常放在此面上。</div>
-                    <div class="glossary-formula">代码参数: S</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">正视差 / 入屏 / 深景 (Positive Parallax)</div>
-                    <div class="glossary-def">背景位于屏幕后方。硬上限是人的瞳距（约63.5mm），但考虑前排观众和儿童，业界常保守设定在 <b>50mm - 60mm</b> 之间。超出将导致眼球向外扯（爆眼），眼睛无法融合。</div>
-                    <div class="glossary-formula">δ_pos = B × F × M × (1/S − 1/L)</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">负视差 / 出屏 / 飞出 (Negative Parallax)</div>
-                    <div class="glossary-def">前景位于屏幕前方。由于人眼可以向内高度聚焦（斗鸡眼），它<b>没有类似瞳距那样的硬物理上限</b>。大型银幕上负视差完全可以大于正视差（如达到100mm以上）。主要限制来自于"窗口违例"（出屏物体被边缘切断）和长时间内聚疲劳。</div>
-                    <div class="glossary-formula">δ_neg = B × F × M × (1/N − 1/S)</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">放大倍数 M (Magnification Ratio)</div>
-                    <div class="glossary-def">银幕物理宽度与传感器宽度之比。用于将感光器上的视差换算为银幕上的实际物理视差。</div>
-                    <div class="glossary-formula">M = 银幕宽(mm) / 传感器宽(mm)</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">1/30 经验法则</div>
-                    <div class="glossary-def">以零视差面距离 S 除以 30 作为轴距粗估值。适用于一般场景的快速估算，但大屏幕下基于像素放大的精算值必然远小于经验值。本计算器结果完全覆盖且优于此法则。</div>
-                    <div class="glossary-formula">B_ref = S / 30</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">角视差 θ (Angular Parallax)</div>
-                    <div class="glossary-def">银幕上两眼视差对应观众视角的夹角。SMPTE 建议 ≤1.5°，IMAX 更保守取 1°。</div>
-                    <div class="glossary-formula">θ = atan(δ_mm / D_mm)；δ_max = D × tan(θ_max)</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">Davis 法则 (L ≥ 2N)</div>
-                    <div class="glossary-def">当最远景 L < 2 × 最近景 N 时，景深过浅，导致背景正视差急剧扩大引发爆眼。此法则强制保证最小背景安全距离。</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">HIT 平移 (Horizontal Image Translation)</div>
-                    <div class="glossary-def">后期将左右眼画面水平移动，以将主体拉回零视差面的操作。物理量为 HIT mm，换算为像素后在剪辑软件中执行。</div>
-                    <div class="glossary-formula">HIT_mm = F × B / S；HIT_px = HIT_mm / 传感器宽 × 时间线宽</div>
-                </div>
-                <div class="glossary-item">
-                    <div class="glossary-term">窗口违例 Window Violation</div>
-                    <div class="glossary-def">负视差（出屏）前景物体被银幕边框遮挡，导致大脑接收到矛盾信息（前景应在银幕前，却被银幕框截断），引发剧烈不适。</div>
-                </div>
-            </div>
-
-            <!-- 拍摄指南 -->
-            <button class="accordion-btn" onclick="toggleAccordion('guidePanel')">
-                <span>🎬 <span data-zh="工业级拍摄与后期指南" data-en="Production & Post Guidelines">工业级拍摄与后期指南</span></span>
-                <span id="guidePanel_icon">▼</span>
-            </button>
-            <div class="accordion-content" id="guidePanel">
-                <div class="formula-note" style="margin-bottom:12px; border-left-color:var(--success);">
-                    <b>前期 Production</b><br>
-                    • <b>永远平行拍摄（Parallel Rig）</b>——严禁内八字会聚（Toe-in），会带来不可修复的梯形畸变（Keystone Distortion）。<br>
-                    • 本引擎分别推演背景正视差和前景负视差，取<b>更严苛一侧</b>作为安全轴距，请严格按计算值架设，不要冒险增大。<br>
-                    • 轴距 &lt;65mm 时，物理上两台摄影机无法并排安装，必须使用 Mirror Rig。
-                </div>
-                <div class="formula-note" style="border-left-color:var(--primary);">
-                    <b>后期 Post-Production</b><br>
-                    • <b>HIT 像素平移</b>：计算结果中的 px 值，即在后期软件中将左/右眼画面分别向内平移的绝对像素量（左眼右移 + 右眼左移），从而将主体拉回零视差面（ZPS）。<br>
-                    • <b>重要：分辨率基准</b>——HIT 像素量以<b>后期时间线分辨率</b>为基准，与前期拍摄分辨率无关。若时间线为 4K UHD（3840px），则始终按 3840px 计算。<br>
-                    • 正式交付前务必在影院真实银幕上用偏振眼镜核验舒适度。
                 </div>
             </div>
 
@@ -829,7 +786,6 @@
     </div>
 </div>
 
-<!-- 浮动提示气泡 -->
 <div id="floatingTip" class="floating-tip hidden collapsed">
     <div class="floating-tip-content" id="floatingTipContent">
         <button class="floating-tip-close" onclick="toggleFloatingTip()">×</button>
@@ -855,7 +811,7 @@ let saveTimer;
 let hasUnreadTip = false; 
 
 /* ============================================================
-   浮动气泡控制
+   浮动气泡与交互
 ============================================================ */
 function toggleFloatingTip() {
     const tip = document.getElementById('floatingTip');
@@ -869,14 +825,16 @@ function toggleFloatingTip() {
     }
 }
 
-/* ============================================================
-   动态预算与状态绑定
-============================================================ */
+function toggleImportBox() {
+    const box = document.getElementById('importBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
 function getRecommendedPercentages(w) {
-    if (w >= 15000) return { p: 0.5, n: 0.25 }; // 巨幕 IMAX
-    if (w >= 8000) return { p: 1.0, n: 0.5 };  // 大银幕 Cinema
-    if (w >= 4000) return { p: 1.5, n: 0.75 }; // 中屏 Medium
-    return { p: 2.0, n: 1.0 }; // 电视/移动端 Consumer
+    if (w >= 15000) return { p: 0.5, n: 0.25 };
+    if (w >= 8000) return { p: 1.0, n: 0.5 };
+    if (w >= 4000) return { p: 1.5, n: 0.75 };
+    return { p: 2.0, n: 1.0 };
 }
 
 function applyAutoBudget(w) {
@@ -893,7 +851,7 @@ function overrideBudget() {
     isBudgetOverridden = true;
     document.getElementById('budgetStatus').textContent = currentLang === 'zh' ? '⚠️ [手动覆盖 Manual]' : '⚠️ [Manual Override]';
     document.getElementById('budgetStatus').style.color = 'var(--warning)';
-    document.getElementById('btnResetBudget').style.display = 'inline-block';
+    document.getElementById('btnResetBudget').style.display = 'inline-flex';
 }
 
 function resetBudgetAuto() {
@@ -909,12 +867,11 @@ function syncNS(source) {
     const sEl = document.getElementById('subjectDist');
     if (source === 'N') sEl.value = nEl.value;
     else if (source === 'S') nEl.value = sEl.value;
-    else { nEl.value = sEl.value; }
+    else if (source === 'import') {
+        // do nothing on value, just align checkbox logically
+    } else { nEl.value = sEl.value; }
 }
 
-/* ============================================================
-   语言切换
-============================================================ */
 function toggleLang() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     document.getElementById('langBtn').textContent = currentLang === 'zh' ? 'EN' : '中';
@@ -925,14 +882,10 @@ function toggleLang() {
     setTimeout(scaleReportCard, 50);
 }
 
-/* ============================================================
-   主题切换
-============================================================ */
 function toggleTheme() {
     const html = document.documentElement;
     const btn = document.getElementById('themeBtn');
-    const isDark = html.getAttribute('data-theme') === 'dark';
-    if (isDark) { html.removeAttribute('data-theme'); btn.textContent = '🌙'; localStorage.setItem('theme','light'); }
+    if (html.getAttribute('data-theme') === 'dark') { html.removeAttribute('data-theme'); btn.textContent = '🌙'; localStorage.setItem('theme','light'); }
     else { html.setAttribute('data-theme','dark'); btn.textContent = '☀️'; localStorage.setItem('theme','dark'); }
 }
 (function initTheme() {
@@ -943,19 +896,13 @@ function toggleTheme() {
     }
 })();
 
-/* ============================================================
-   折叠面板
-============================================================ */
 function toggleAccordion(id) {
     const c = document.getElementById(id), ic = document.getElementById(id+'_icon');
-    const show = c.classList.toggle('show');
+    const show = c.closest('.accordion-card').classList.toggle('show');
     ic.textContent = show ? '▲' : '▼';
     if (id === 'visualCardPanel' && show) scaleReportCard();
 }
 
-/* ============================================================
-   预设同步 & 辅屏开关
-============================================================ */
 function syncPreset(selectId, inputId) {
     const val = parseFloat(document.getElementById(inputId).value);
     const sel = document.getElementById(selectId);
@@ -967,10 +914,7 @@ function syncPreset(selectId, inputId) {
 }
 function updateScreenInput() {
     const v = document.getElementById('screenPreset').value;
-    if (v !== 'custom') {
-        document.getElementById('screenWidth').value = v;
-        applyAutoBudget(parseFloat(v));
-    }
+    if (v !== 'custom') { document.getElementById('screenWidth').value = v; applyAutoBudget(parseFloat(v)); }
     calculate();
 }
 function checkScreenInput() { 
@@ -1006,18 +950,81 @@ function toggleSecScreen() {
     setTimeout(scaleReportCard, 50);
 }
 
-/* ============================================================
-   防抖写入硬盘
-============================================================ */
 function deferredSave() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveParams, 800);
 }
 
 /* ============================================================
+   自动解析粘贴文本 (智能导入)
+============================================================ */
+function parseReport() {
+    const text = document.getElementById('importText').value;
+    if (!text) {
+        showToast(currentLang === 'zh' ? '⚠ 请先粘贴单据文本' : '⚠ Please paste report text');
+        return;
+    }
+
+    const extract = (regex) => { const m = text.match(regex); return m ? m[1] : null; };
+
+    // Regex extraction
+    const focal = extract(/Focal[^:]*:\s*([\d.]+)/i) || extract(/焦距[^:]*:\s*([\d.]+)/i);
+    const near = extract(/Near N[^:]*:\s*([\d.]+)/i) || extract(/近景[^:]*:\s*([\d.]+)/i);
+    const zps = extract(/ZPS S[^:]*:\s*([\d.]+)/i) || extract(/零视差[^:]*:\s*([\d.]+)/i);
+    const far = extract(/Far L[^:]*:\s*([\d.]+|∞)/i) || extract(/远景[^:]*:\s*([\d.]+|∞)/i);
+    
+    const screen = extract(/Screen[^:]*:\s*([\d.]+)/i) || extract(/主屏宽[^:]*:\s*([\d.]+)/i);
+    const sensor = extract(/Sensor[^:]*:\s*([\d.]+)/i) || extract(/传感器[^:]*:\s*([\d.]+)/i);
+    const res = extract(/Res[^:]*:\s*([\d.]+)/i) || extract(/分辨率[^:]*:\s*([\d.]+)/i);
+    
+    const ia = extract(/Applied IA[^:]*:\s*([\d.]+)/i) || extract(/实际设定轴距[^:]*:\s*([\d.]+)/i) || extract(/设定轴距[^:]*:\s*([\d.]+)/i);
+
+    let importedCount = 0;
+
+    if (screen) { document.getElementById('screenWidth').value = screen; checkScreenInput(); importedCount++; }
+    if (sensor) { document.getElementById('sensorWidth').value = sensor; checkSensorInput(); importedCount++; }
+    if (res) { document.getElementById('sensorRes').value = res; checkResInput(); importedCount++; }
+    
+    if (focal) { document.getElementById('focalLength').value = focal; importedCount++; }
+    if (near) { document.getElementById('nearestDist').value = near; importedCount++; }
+    if (zps) { document.getElementById('subjectDist').value = zps; importedCount++; }
+    
+    if (far) {
+        if (far === '∞') {
+            document.getElementById('isInfinity').checked = true;
+        } else {
+            document.getElementById('isInfinity').checked = false;
+            document.getElementById('largestDist').value = far;
+        }
+        toggleInfinity();
+        importedCount++;
+    }
+
+    // Auto-detect N=S binding
+    if (near && zps && parseFloat(near) === parseFloat(zps)) {
+        document.getElementById('bindNS').checked = true;
+    } else {
+        document.getElementById('bindNS').checked = false;
+    }
+
+    if (importedCount > 0) {
+        calculate(); 
+        if (ia) {
+            document.getElementById('appliedIAInput').value = ia;
+            document.getElementById('appliedIASlider').value = ia;
+            updateActuals();
+        }
+        showToast(currentLang === 'zh' ? '✅ 成功导入并应用参数！' : '✅ Settings applied successfully!');
+        toggleImportBox(); // Hide after success
+        document.getElementById('importText').value = '';
+    } else {
+        showToast(currentLang === 'zh' ? '❌ 未识别到有效参数，请检查文本格式' : '❌ No valid parameters recognized');
+    }
+}
+
+/* ============================================================
    核心计算引擎
 ============================================================ */
-
 function computeLimits(sw, ipd, posP, negP, autoNeg, useAng, vDist, maxAng) {
     let pos = Math.min(ipd, sw * posP / 100);
     let neg = sw * negP / 100;
@@ -1076,11 +1083,11 @@ function calculate() {
 
     let advice = '';
     if (document.getElementById('bindNS').checked) {
-        advice = isZH ? '🔒 <b>已锁定主体即最近景</b>：此时画面无出屏（负视差为零），是一种非常安全、干净的“窗户式”纯深景构图，完美避免边缘窗口违例。' : '🔒 <b>N=S Locked</b>: Safe window-like deep 3D composition with zero pop-out.';
+        advice = isZH ? '🔒 <b>已锁定主体即最近景</b>：无出屏深景构图。' : '🔒 <b>N=S Locked</b>: Safe deep 3D composition.';
     } else if (sw >= 15000) {
-        advice = isZH ? `⚠ 超大银幕（≥15m）：正视差建议 ≤0.5%，负视差 ≤0.25%。` : `⚠ Giant Screen (≥15m): Recommend Positive ≤0.5%, Negative ≤0.25%.`;
+        advice = isZH ? `⚠ 超大银幕（≥15m）：建议正视差 ≤0.5%，负视差 ≤0.25%。` : `⚠ Giant Screen (≥15m): Pos ≤0.5%, Neg ≤0.25%.`;
     } else if (sw >= 8000) {
-        advice = isZH ? `💡 大型银幕（8–15m）：正视差建议 ≤1%，负视差 ≤0.5%。IMAX 取下限。` : `💡 Large Screen (8-15m): Recommend Positive ≤1%, Negative ≤0.5%.`;
+        advice = isZH ? `💡 大型银幕（8–15m）：建议正视差 ≤1%，负视差 ≤0.5%。` : `💡 Large Screen (8-15m): Pos ≤1%, Neg ≤0.5%.`;
     }
     
     const tipContainer = document.getElementById('floatingTip');
@@ -1093,7 +1100,6 @@ function calculate() {
         if (advice !== currentAdvice) {
             currentAdvice = advice;
             tipText.innerHTML = advice;
-            
             if (tipContainer.classList.contains('collapsed')) {
                 hasUnreadTip = true;
                 tipDot.classList.add('active');
@@ -1113,39 +1119,28 @@ function calculate() {
         hasUnreadTip = false;
     }
 
-    const posRecMm = Math.min(ipd, sw * posP / 100).toFixed(1);
-    const negRecMm = (sw * negP / 100).toFixed(1);
-    document.getElementById('screenAdvice').innerHTML = isZH ? 
-        `当前预算：正上限 <b>${posRecMm}mm</b>，负上限 <b>${negRecMm}mm</b>` :
-        `Current Budget: Max Pos <b>${posRecMm}mm</b>, Max Neg <b>${negRecMm}mm</b>`;
-
-    if ([sw, senW, F, S, N].some(v => v <= 0)) { renderInvalid(isZH ? '参数错误：所有基础参数必须大于 0' : 'Error: All base parameters must be > 0'); return; }
-    if (N > S) { renderInvalid(isZH ? '逻辑错误：最近景 N 不能大于零视差面 S (N > S)' : 'Error: Near distance N cannot be greater than ZPS S (N > S)'); return; }
+    if ([sw, senW, F, S, N].some(v => v <= 0)) { renderInvalid(isZH ? '参数必须大于 0' : 'Params must be > 0'); return; }
+    if (N > S) { renderInvalid(isZH ? '最近景 N 不能大于主体 S' : 'N cannot be > S'); return; }
 
     let actualL = L;
     if (!isInf) {
         if (useDavis && actualL < 2 * N) {
             actualL = 2 * N;
-            const davisHtml = isZH ? 
-                `⚠ Davis 保护已介入：为防背景超限，底层推演已强制使用安全截断值 <b>L = ${(actualL/1000).toFixed(1)}m</b>` : 
-                `⚠ Davis Rule active: Using safe minimum <b>L = ${(actualL/1000).toFixed(1)}m</b> for math.`;
-            document.getElementById('davisAlert').innerHTML = davisHtml;
+            document.getElementById('davisAlert').innerHTML = isZH ? `⚠ Davis 保护：截断远景 L = ${(actualL/1000).toFixed(1)}m` : `⚠ Davis Rule: Using L = ${(actualL/1000).toFixed(1)}m`;
             document.getElementById('davisAlert').style.display = 'block';
         } else {
             document.getElementById('davisAlert').style.display = 'none';
         }
-        if (actualL <= S) { renderInvalid(isZH ? '逻辑错误：最远景 L 必须大于零视差面 S (L > S)' : 'Error: Far distance L must be greater than ZPS S (L > S)'); return; }
+        if (actualL <= S) { renderInvalid(isZH ? '最远景 L 必须大于主体 S' : 'L must be > S'); return; }
     } else {
         document.getElementById('davisAlert').style.display = 'none';
     }
 
-    // 主屏推算
     const M = sw / senW;
     const lim = computeLimits(sw, ipd, posP, negP, autoNeg, useAng, vDist, maxAng);
     const mainSolve = solveBase(sw, F, M, S, N, actualL, isInf, lim);
     const B = mainSolve.B;
 
-    // 辅屏推算
     let B2 = 0;
     if (useSec && sw2 > 0) {
         const M2 = sw2 / senW;
@@ -1156,26 +1151,19 @@ function calculate() {
     }
 
     if (!Number.isFinite(B) || B <= 0) {
-        renderInvalid(isZH ? '推演失败：当前深度几何无法找到安全轴距，请重新规划 N/S/L' : 'Calculation Failed: Cannot find safe IA for current depth geometry.');
+        renderInvalid(isZH ? '推演失败：无法求解安全轴距' : 'Failed to find safe IA.');
         return;
     }
-
-    const bPosStr = Number.isFinite(mainSolve.Bpos) ? mainSolve.Bpos.toFixed(1) : '∞';
-    const bNegStr = Number.isFinite(mainSolve.Bneg) ? mainSolve.Bneg.toFixed(1) : '∞';
-    
-    // 降级 1/30
-    const oneThirty = S / 30;
 
     globalData.isValid = true;
     globalData.maxBase = B;
     globalData.secBase = useSec ? B2.toFixed(2) : 'N/A';
-    globalData.oneThirty = oneThirty.toFixed(2);
+    globalData.oneThirty = (S / 30).toFixed(2);
     globalData.limPos = lim.pos;
     globalData.limNeg = lim.neg;
     
-    const sliderMax = Math.max(150, Math.ceil(B * 1.5));
+    const sliderMax = Math.max(20, Math.ceil(B * 1.5));
     document.getElementById('appliedIASlider').max = sliderMax;
-
     document.getElementById('appliedIAInput').value = B.toFixed(2);
     document.getElementById('appliedIASlider').value = B.toFixed(2);
 
@@ -1184,9 +1172,34 @@ function calculate() {
 
 function updateActuals() {
     const isZH = currentLang === 'zh';
-    const appliedB = parseFloat(document.getElementById('appliedIAInput').value) || 0;
+    const appliedIAInput = document.getElementById('appliedIAInput');
+    const appliedIASlider = document.getElementById('appliedIASlider');
+    
+    let appliedB = parseFloat(appliedIAInput.value) || 0;
+
+    if (appliedB > parseFloat(appliedIASlider.max)) {
+        appliedIASlider.max = Math.ceil(appliedB * 1.5);
+    }
     globalData.base = appliedB.toFixed(2);
     
+    const EPSILON = 0.01; // 用于处理浮点数比较精度误差
+    
+    const isSafe = appliedB <= (globalData.maxBase + EPSILON);
+    appliedIAInput.style.color = isSafe ? 'var(--success)' : 'var(--danger)';
+
+    const elResultBox = document.querySelector('.result-box');
+    if (elResultBox) {
+        elResultBox.style.borderColor = isSafe ? 'var(--result-border)' : 'var(--danger)';
+        elResultBox.style.background = isSafe ? 'var(--result-bg)' : 'rgba(255,59,48,0.06)';
+    }
+    
+    const marker = document.getElementById('maxSafeMarker');
+    if (globalData.maxBase > 0 && appliedIASlider.max > 0) {
+        let pct = (globalData.maxBase / appliedIASlider.max) * 100;
+        pct = Math.min(100, Math.max(0, pct));
+        marker.style.left = `calc(${pct}% + (${8 - pct * 0.16}px))`;
+    }
+
     const sw   = parseFloat(document.getElementById('screenWidth').value)  || 0;
     const senW = parseFloat(document.getElementById('sensorWidth').value)   || 0;
     const res  = parseFloat(document.getElementById('sensorRes').value)     || 0;
@@ -1214,21 +1227,58 @@ function updateActuals() {
     globalData.hitPx = hitPx.toString();
     globalData.halfPx = halfPx.toString();
 
-    // 更新 DOM
-    document.getElementById('resMaxBase').textContent = globalData.maxBase.toFixed(2);
-    if (document.getElementById('useSecScreen').checked) {
-        document.getElementById('resBaseSec').textContent = globalData.secBase;
+    const FMB = appliedB * F * M;
+    const h_max_screen = FMB / N + globalData.limNeg;          
+    const h_min_screen = isInf ? (-globalData.limPos) : Math.max(0, FMB / actualL - globalData.limPos); 
+    const h_current_screen = FMB / S;                
+    
+    const toSensorMm = senW / sw;
+    const toPx = res / senW;
+    const hitPxMax = (senW > 0 && res > 0) ? Math.round(h_max_screen * toSensorMm * toPx / 2) : 0;
+    const hitPxMin = (senW > 0 && res > 0) ? Math.round(h_min_screen * toSensorMm * toPx / 2) : 0;
+    const hitPxCurrent = (senW > 0 && res > 0) ? Math.round(h_current_screen * toSensorMm * toPx / 2) : 0;
+    const hitHeadroom = hitPxMax - hitPxCurrent; 
+
+    globalData.hitPxMin = hitPxMin;
+    globalData.hitPxMax = hitPxMax;
+    globalData.hitHeadroom = hitHeadroom;
+
+    let postShiftTip = '';
+    if (N === S) {
+        globalData.isNSLocked = true;
+        const remainingPos = Math.max(0, globalData.limPos - actualPos);
+        const maxShiftMm = Math.min(remainingPos, globalData.limNeg);
+        const maxShiftPxTotal = sw > 0 ? (maxShiftMm / sw) * res : 0;
+        const maxShiftPxHalf = Math.round(maxShiftPxTotal / 2);
+        
+        globalData.maxShiftMm = maxShiftMm;
+        globalData.maxShiftPxHalf = maxShiftPxHalf;
+
+        if (maxShiftMm > 0.1) {
+            postShiftTip = isZH ? 
+                `<br><br><span style="color:var(--success)"><b>💡 后期出屏预留空间</b>：当前主体在幕内(无出屏)。后期可通过左右画面外移最多 <b>${maxShiftPxHalf} px/眼</b>，安全创造最高 <b>${maxShiftMm.toFixed(1)}mm</b> 的出屏效果。</span>` : 
+                `<br><br><span style="color:var(--success)"><b>💡 Post Pop-out Room</b>: Room to shift L/R images outward by max <b>${maxShiftPxHalf} px/eye</b> in post for up to <b>${maxShiftMm.toFixed(1)}mm</b> pop-out.</span>`;
+        } else {
+            postShiftTip = isZH ? 
+                `<br><br><span style="color:var(--danger)"><b>⚠ 后期出屏已锁死</b>：当前无出屏，背景正视差已达物理极限，后期<b>不可</b>再外移画面创造出屏。</span>` : 
+                `<br><br><span style="color:var(--danger)"><b>⚠ Post Pop-out Locked</b>: Background parallax is at max limit. You <b>cannot</b> shift images outward in post.</span>`;
+        }
+    } else {
+        globalData.isNSLocked = false;
     }
 
-    document.getElementById('actPosVal').textContent = actualPos.toFixed(1);
-    document.getElementById('actNegVal').textContent = actualNeg.toFixed(1);
-    document.getElementById('actTotalVal').textContent = actualTotal.toFixed(1);
-    document.getElementById('limPosVal').textContent = globalData.limPos.toFixed(1);
-    document.getElementById('limNegVal').textContent = globalData.limNeg.toFixed(1);
+    const elResMaxBase = document.getElementById('resMaxBase');
+    if (elResMaxBase) elResMaxBase.textContent = globalData.maxBase.toFixed(2);
+    const elResBaseSec = document.getElementById('resBaseSec');
+    if (elResBaseSec && document.getElementById('useSecScreen').checked) elResBaseSec.textContent = globalData.secBase;
+
+    ['actPosVal', 'actNegVal', 'actTotalVal'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if(el) el.textContent = [actualPos, actualNeg, actualTotal][i].toFixed(1);
+    });
 
     const totalLim = globalData.limPos + globalData.limNeg;
     if (totalLim > 0) {
-        // 反向布局宽度的注入
         document.getElementById('wrapNeg').style.width = (globalData.limNeg / totalLim * 100) + '%';
         document.getElementById('wrapPos').style.width = (globalData.limPos / totalLim * 100) + '%';
     }
@@ -1236,86 +1286,116 @@ function updateActuals() {
     document.getElementById('fillNeg').style.width = Math.min(100, (actualNeg / globalData.limNeg * 100)) + '%';
     document.getElementById('fillPos').style.width = Math.min(100, (actualPos / globalData.limPos * 100)) + '%';
     
-    document.getElementById('actPosVal').style.color = actualPos > globalData.limPos ? 'var(--danger)' : 'var(--primary)';
-    document.getElementById('fillPos').style.background = actualPos > globalData.limPos ? 'var(--danger)' : 'var(--primary)';
-    document.getElementById('actNegVal').style.color = actualNeg > globalData.limNeg ? '#8b0000' : 'var(--danger)'; 
+    // ===== 修复浮点数精度超限判断 =====
+    const isPosOver = (actualPos - globalData.limPos) > EPSILON;
+    const isNegOver = (actualNeg - globalData.limNeg) > EPSILON;
+    
+    document.getElementById('fillPos').classList.toggle('overflow', isPosOver);
+    document.getElementById('fillNeg').classList.toggle('overflow', isNegOver);
+
+    const hintEl = document.getElementById('budgetOverflowHint');
+    if (hintEl) {
+        if (isPosOver || isNegOver) {
+            hintEl.style.display = 'block';
+            let msgs = [];
+            if (isPosOver) msgs.push(isZH ? `背景超限 ${(actualPos - globalData.limPos).toFixed(1)}mm` : `Pos over by ${(actualPos - globalData.limPos).toFixed(1)}mm`);
+            if (isNegOver) msgs.push(isZH ? `前景超限 ${(actualNeg - globalData.limNeg).toFixed(1)}mm` : `Neg over by ${(actualNeg - globalData.limNeg).toFixed(1)}mm`);
+            hintEl.textContent = `⚠ ${msgs.join('，')}。`;
+        } else {
+            hintEl.style.display = 'none';
+        }
+    }
+
+    document.getElementById('actPosVal').style.color = isPosOver ? 'var(--danger)' : 'var(--primary)';
+    document.getElementById('fillPos').style.background = isPosOver ? 'var(--danger)' : 'var(--primary)';
+    document.getElementById('actNegVal').style.color = isNegOver ? '#8b0000' : 'var(--danger)'; 
     
     document.getElementById('resHitMm').textContent = hitMm.toFixed(3) + ' mm';
     document.getElementById('resHitPx').textContent = halfPx + (isZH ? ' px/眼' : ' px/eye');
 
-    let postShiftTip = '';
-    if (N === S) {
-        const remainingPos = Math.max(0, globalData.limPos - actualPos);
-        const maxShiftMm = Math.min(remainingPos, globalData.limNeg);
-        const maxShiftPxTotal = sw > 0 ? (maxShiftMm / sw) * res : 0;
-        const maxShiftPxHalf = Math.round(maxShiftPxTotal / 2);
-        
-        if (maxShiftMm > 0.1) {
-            postShiftTip = isZH ? 
-                `<br><br><span style="color:var(--success)"><b>💡 后期出屏预留空间</b>：当前主体在幕内(无出屏)。由于背景视差仍有冗余，后期可通过左右画面外移最多 <b>${maxShiftPxHalf} px/眼</b>，安全创造最高 <b>${maxShiftMm.toFixed(1)}mm</b> 的出屏效果。</span>` : 
-                `<br><br><span style="color:var(--success)"><b>💡 Post Pop-out Room</b>: N=S (Zero pop-out). You have room to shift L/R images outward by max <b>${maxShiftPxHalf} px/eye</b> in post, safely creating up to <b>${maxShiftMm.toFixed(1)}mm</b> of pop-out.</span>`;
-        } else {
-            postShiftTip = isZH ? 
-                `<br><br><span style="color:var(--danger)"><b>⚠ 后期出屏已锁死</b>：当前无出屏。且背景正视差已达物理极限，后期<b>不可</b>再外移画面创造出屏（会导致背景爆眼）。若需后期出屏，请降低上方【实际架设轴距】以预留空间。</span>` : 
-                `<br><br><span style="color:var(--danger)"><b>⚠ Post Pop-out Locked</b>: Background parallax is at max limit. You <b>cannot</b> shift images outward in post to create pop-out (will cause divergence). Lower the Applied IA above to leave headroom.</span>`;
-        }
-    }
-
-    let bottleneckInfo = isZH ? 
-        `<b>现场推演分析</b>: 极限计算中，入屏最大允许 ${globalData.limPos.toFixed(1)}mm，出屏最大允许 ${globalData.limNeg.toFixed(1)}mm。<br>
-        在您设定的实际轴距 <b>${globalData.base}mm</b> 下，产生总视差厚度 <b>${actualTotal.toFixed(1)}mm</b> (约占屏幕宽度的 ${(actualTotal/sw*100).toFixed(1)}%)。<br>
-        <b>1/30法则参考</b>: ${globalData.oneThirty} mm${postShiftTip}` : 
-        `<b>Analysis</b>: Limit budget allows Max Pos ${globalData.limPos.toFixed(1)}mm | Max Neg ${globalData.limNeg.toFixed(1)}mm.<br>
-        At your Applied IA of <b>${globalData.base}mm</b>, total depth is <b>${actualTotal.toFixed(1)}mm</b> (~${(actualTotal/sw*100).toFixed(1)}% of screen width).<br>
-        <b>1/30 Rule Ref</b>: ${globalData.oneThirty} mm${postShiftTip}`;
+    const elResAnalysis = document.getElementById('resAnalysis');
+    if (elResAnalysis) elResAnalysis.innerHTML = `<span style="font-size:0.85rem; color:var(--label); line-height:1.6;">${isZH ? '<b>分析</b>: ' : '<b>Analysis</b>: '} 总视差厚度 <b>${actualTotal.toFixed(1)}mm</b>。<b>1/30参考</b>: ${globalData.oneThirty} mm${postShiftTip}</span>`;
     
-    document.getElementById('resAnalysis').innerHTML = `<span style="font-size:0.8rem; color:var(--label); line-height:1.5;">${bottleneckInfo}</span>`;
-    document.getElementById('rigHint').innerHTML = appliedB < 85 ? (isZH ? '💡 当前拍摄轴距偏窄，必须使用 <b>垂直反射式支架 (Mirror Rig)</b>' : '💡 Narrow IA: <b>Mirror Rig</b> required.') : '';
+    const elRigHint = document.getElementById('rigHint');
+    if (elRigHint) elRigHint.innerHTML = appliedB < 85 ? (isZH ? '💡 轴距偏窄，需使用 <b>垂直反射式支架 (Mirror Rig)</b>' : '💡 <b>Mirror Rig</b> required.') : '';
 
     const fStr = F.toString(), nStr = (N/1000).toFixed(1)+'m', sStr = (S/1000).toFixed(1)+'m';
     const lStr = isInf ? '∞' : (actualL/1000).toFixed(1)+'m';
 
-    document.getElementById('textReportBox').value = isZH ? 
-`===== 3D 现场拍摄参数联通单 =====
-[架设执行 SETUP]
-★ 实际架设轴距 Applied IA : ${globalData.base} mm
-(极限安全范围 Max Safe IA: ${globalData.maxBase.toFixed(2)} mm)
-${document.getElementById('useSecScreen').checked ? `辅屏安全参考 Sec Target IA : ${globalData.secBase} mm\n` : ''}---------------------------
-[实际画面视差 Actual Parallax on Screen]
+    let postInfoZH = `[后期联通 POST SHIFT]\nHIT 物理值 : ${globalData.hitMm} mm\n像素平移量 : L→${halfPx}px | R←${halfPx}px\n`;
+    if (globalData.isNSLocked) {
+        if (globalData.maxShiftMm > 0.1) {
+            postInfoZH += `💡出屏预留 : 可向外平移最多 ${globalData.maxShiftPxHalf} px/眼，创造最高 ${globalData.maxShiftMm.toFixed(1)} mm 出屏`;
+        } else {
+            postInfoZH += `⚠出屏预留 : 已锁死 (正视差达极限，后期不可外移画面)`;
+        }
+    } else {
+        postInfoZH += `💡加强余量 : 剩余 ${globalData.hitHeadroom} px/眼 (至出屏极限)`;
+    }
+
+    let postInfoEN = `[POST PRODUCTION SHIFT]\nHIT Shift   : ${globalData.hitMm} mm\nPixel Shift : L Eye -> ${halfPx}px | R Eye <- ${halfPx}px\n`;
+    if (globalData.isNSLocked) {
+        if (globalData.maxShiftMm > 0.1) {
+            postInfoEN += `💡Pop-out Room: Max outward shift ${globalData.maxShiftPxHalf} px/eye for ${globalData.maxShiftMm.toFixed(1)} mm pop-out`;
+        } else {
+            postInfoEN += `⚠Pop-out Room: Locked (Positive IA maxed, cannot shift outward)`;
+        }
+    } else {
+        postInfoEN += `💡Pop-out Room: ${globalData.hitHeadroom} px/eye remaining`;
+    }
+
+    const toolUrl = window.location.href.split('?')[0]; 
+
+    const elTextReportBox = document.getElementById('textReportBox');
+    if (elTextReportBox) {
+        elTextReportBox.value = isZH ? 
+`===== 3D 现场拍摄联通单 =====
+🎬 [核心架设 SETUP]
+设定轴距 Applied IA : ${globalData.base} mm
+(极限范围 Max Safe  : ${globalData.maxBase.toFixed(2)} mm)
+镜头焦距 Focal      : ${fStr} mm
+
+💻 ${postInfoZH}
+
+⚙️ [系统与景深 SYSTEM & DEPTH]
+主屏宽 Screen : ${sw} mm
+传感器 Sensor : ${senW} mm
+分辨率 Res    : ${res} px
+近景 Near N   : ${nStr}
+零视差 ZPS S  : ${sStr}
+远景 Far L    : ${lStr}
+
+📊 [视差分析 PARALLAX]
 实际出屏 Act Neg : ${actualNeg.toFixed(1)} mm (上限: ${globalData.limNeg.toFixed(1)})
 实际入屏 Act Pos : ${actualPos.toFixed(1)} mm (上限: ${globalData.limPos.toFixed(1)})
-画面总视差 Total   : ${actualTotal.toFixed(1)} mm
----------------------------
-[场景几何 N–S–L]
-镜头焦距 Focal : ${fStr} mm
-近景 Near N : ${nStr}
-零视差 ZPS S: ${sStr}
-远景 Far L  : ${lStr}
----------------------------
-[后期合成 Post Shift]
-HIT 物理值 : ${globalData.hitMm} mm
-像素平移量 : L→${halfPx}px | R←${halfPx}px
+
+🔗 工具网址: ${toolUrl}
+(将此文本粘贴至计算器"导入"面板即可全量复原参数)
 ===========================` : 
 `===== 3D CAM ON-SET REPORT =====
-[SETUP EXECUTION]
-★ Applied IA : ${globalData.base} mm
-(Max Safe Limit: ${globalData.maxBase.toFixed(2)} mm)
-${document.getElementById('useSecScreen').checked ? `Sec Target IA : ${globalData.secBase} mm\n` : ''}---------------------------
-[Actual On-Screen Parallax]
-Actual Negative : ${actualNeg.toFixed(1)} mm (Lim: ${globalData.limNeg.toFixed(1)})
-Actual Positive : ${actualPos.toFixed(1)} mm (Lim: ${globalData.limPos.toFixed(1)})
-Total Depth     : ${actualTotal.toFixed(1)} mm
----------------------------
-[Depth Geometry N-S-L]
-Focal Length : ${fStr} mm
-Near Obj (N) : ${nStr}
-ZPS      (S) : ${sStr}
-Far Bg   (L) : ${lStr}
----------------------------
-[Post Production Shift]
-HIT Shift    : ${globalData.hitMm} mm
-Pixel Shift  : L Eye -> ${halfPx}px | R Eye <- ${halfPx}px
+🎬 [CORE SETUP]
+Applied IA    : ${globalData.base} mm
+(Max Safe IA  : ${globalData.maxBase.toFixed(2)} mm)
+Focal Length  : ${fStr} mm
+
+💻 ${postInfoEN}
+
+⚙️ [SYSTEM & DEPTH]
+Screen Width  : ${sw} mm
+Sensor Width  : ${senW} mm
+Timeline Res  : ${res} px
+Near Obj (N)  : ${nStr}
+ZPS      (S)  : ${sStr}
+Far Bg   (L)  : ${lStr}
+
+📊 [PARALLAX ANALYSIS]
+Act Negative  : ${actualNeg.toFixed(1)} mm (Lim: ${globalData.limNeg.toFixed(1)})
+Act Positive  : ${actualPos.toFixed(1)} mm (Lim: ${globalData.limPos.toFixed(1)})
+
+🔗 Tools URL: ${toolUrl}
+(Paste this report into the app's "Import" panel to restore)
 ===========================`;
+    }
 
     const ipd = parseFloat(document.getElementById('ipdLimit').value) || 63.5;
     updateVisualCardDOM(
@@ -1326,510 +1406,234 @@ Pixel Shift  : L Eye -> ${halfPx}px | R Eye <- ${halfPx}px
         globalData.limPos.toFixed(1), globalData.limNeg.toFixed(1)
     );
     updateVisualizer();
-    updateTopDownView(); // 触发 2D 推演更新
+    updateTopDownView(); 
     deferredSave(); 
 }
 
 /* ============================================================
-   全新 2D 俯视光路边界推演图（真实缩放比例与网格体系）
+   二维俯视光路图、海报及拖拽(略作精简压缩)
 ============================================================ */
 function updateTopDownView() {
     const svg = document.getElementById('topDownSvg');
-    if(!svg) return;
-    const w = svg.clientWidth || 400;
-    const h = svg.clientHeight || 180;
+    if (!svg) return;
+    const w = svg.clientWidth || 500, h = svg.clientHeight || 260;
     const isZH = currentLang === 'zh';
+    if (!globalData.isValid) { svg.innerHTML = `<text x="${w/2}" y="${h/2}" fill="var(--danger)" text-anchor="middle">⚠ Invalid parameters</text>`; return; }
     
-    // 11️⃣ 无效状态处理
-    if (!globalData.isValid) {
-        svg.innerHTML = `<text x="${w/2}" y="${h/2}" fill="var(--danger)" font-size="14" font-weight="bold" text-anchor="middle">${isZH ? '⚠ 参数无效' : '⚠ Invalid parameters'}</text>`;
-        return;
-    }
-
-    const appliedB = parseFloat(globalData.base) || 0.001; 
-    const F = parseFloat(document.getElementById('focalLength').value) || 50;
-    const sw = parseFloat(document.getElementById('screenWidth').value) || 10000;
-    const senW = parseFloat(document.getElementById('sensorWidth').value) || 36;
-    const M = sw / senW;
-    const S = (parseFloat(document.getElementById('subjectDist').value) || 4) * 1000;
-    const N_act = (parseFloat(document.getElementById('nearestDist').value) || 2) * 1000;
-    const isInf = document.getElementById('isInfinity').checked;
+    const appliedB = parseFloat(globalData.base) || 0.001, F = parseFloat(document.getElementById('focalLength').value) || 50;
+    const sw = parseFloat(document.getElementById('screenWidth').value) || 10000, senW = parseFloat(document.getElementById('sensorWidth').value) || 36;
+    const M = sw / senW, S = (parseFloat(document.getElementById('subjectDist').value) || 4) * 1000, N_act = (parseFloat(document.getElementById('nearestDist').value) || 2) * 1000;
+    const isInf = document.getElementById('isInfinity').checked, L_input = parseFloat(document.getElementById('largestDist').value) || 10;
+    let actualL = isInf ? S * 3.5 : L_input * 1000;
+    if (!isInf && document.getElementById('useDavis').checked && actualL < 2 * N_act) actualL = 2 * N_act;
     
-    const L_input = parseFloat(document.getElementById('largestDist').value) || 10;
-    let actualL = L_input * 1000;
-    const useDavis = document.getElementById('useDavis').checked;
-    if (!isInf && useDavis && actualL < 2 * N_act) actualL = 2 * N_act;
-
-    // 核心：基于当前 Applied IA，反推安全的深度边界(N_safe 和 L_safe)
-    const limPos = globalData.limPos; 
-    const limNeg = globalData.limNeg; 
-
-    // N_safe (出屏极限面)
-    const nSafeInv = limNeg / (appliedB * F * M) + 1/S;
-    const N_safe = 1 / nSafeInv;
-
-    // L_safe (入屏极限面)
-    const lSafeInv = 1/S - limPos / (appliedB * F * M);
+    const N_safe = 1 / (globalData.limNeg / (appliedB * F * M) + 1 / S);
+    const lSafeInv = 1 / S - globalData.limPos / (appliedB * F * M);
     const L_safe = lSafeInv > 0 ? 1 / lSafeInv : Infinity;
-
-    // -- 动态缩放逻辑 (真实物理比例) --
-    // 决定可视最大深度 max_Z，以确保重要面都在视野内，但防畸变过小
-    let max_Z = isInf ? S * 2.5 : Math.max(S * 1.5, actualL * 1.1);
-    if (L_safe !== Infinity && L_safe < max_Z * 2.5) {
-        max_Z = Math.max(max_Z, L_safe * 1.1);
-    }
-    // 防止 L 设得过大导致其他所有元素变成一条线
-    max_Z = Math.min(max_Z, S * 5); 
-    if (!isInf && actualL > max_Z) max_Z = actualL * 1.05; 
-
-    const camX = 40;
-    const endX = w - 20;
-    const px_per_mm = (endX - camX) / max_Z; // 横向 X 轴实际上代表真实物理深度 Z
-    const zToX = (z) => camX + z * px_per_mm;
-
-    // 计算各关键面的 X 坐标
-    const x_S = zToX(S);
-    const x_N_safe = zToX(N_safe);
-    const x_L_safe = L_safe === Infinity ? Infinity : zToX(L_safe);
-    const x_N_act = zToX(N_act);
-    const x_L_act = isInf ? endX : zToX(actualL);
-
-    // 4️⃣ 多语言标签准备
-    const txtActN = isZH ? '实际近景 N' : 'Act N';
-    const txtActL = isZH ? '实际远景 L' : 'Act L';
-    const txtNegLim = isZH ? '出屏极限' : 'Neg Limit';
-    const txtPosLim = isZH ? '入屏极限' : 'Pos Limit';
-    const txtZPS = isZH ? '零视差面(ZPS)' : 'ZPS';
-    const txtOver = isZH ? '(超限)' : '(Over)';
-    const txtRayDesc = isZH ? '左右机位光轴示意，虚线为延长线' : 'Camera rays & extension';
-    const txtScaleDesc = isZH ? '深度轴真实比例 / 纵向示意非等比' : 'Depth Axis to Scale / Vert. Axis Schematic';
-    const txtIAExag = isZH ? 'IA 纵向显示已放大，仅示意' : 'IA vertically exaggerated';
-
-    // 8️⃣ 实际深度条超限状态
-    const isNOver = N_act < N_safe - 1; // 1mm 浮点缓冲
-    const isLOver = !isInf && (actualL > L_safe + 1);
-    const colorN = isNOver ? '#8b0000' : 'var(--danger)'; 
-    const colorL = isLOver ? '#ff9f0a' : 'var(--primary)'; 
-    const labelN = txtActN + (isNOver ? ` ${txtOver}` : '');
-    const labelL = txtActL + (isLOver ? ` ${txtOver}` : '');
-
-    // 5️⃣ 获取真实的 CSS 颜色以替换 SVG gradient 中的 CSS 变量
-    const computedStyles = getComputedStyle(document.documentElement);
-    const rawPrimary = computedStyles.getPropertyValue('--primary').trim() || '#007AFF';
-    const rawBg = computedStyles.getPropertyValue('--bg').trim() || '#f2f2f7';
-
-    let html = '';
     
-    // 1️⃣ 比例语义修正
-    html += `<text x="${w - 5}" y="12" fill="var(--label)" font-size="9" text-anchor="end">${txtScaleDesc}</text>`;
-
-    // 9️⃣ 网格优化
-    const visibleMeters = max_Z / 1000;
-    let gridStep = 1000; 
-    if (visibleMeters > 30) gridStep = 5000;
-    if (visibleMeters > 100) gridStep = 20000;
-    if (visibleMeters <= 5) gridStep = 500;
-
-    html += `<g stroke="var(--border)" stroke-width="1" stroke-dasharray="2">`;
-    let lastTextX = -999;
-    for(let z = gridStep; z <= max_Z; z += gridStep) {
-        const x = zToX(z);
-        html += `<line x1="${x}" y1="0" x2="${x}" y2="${h}"/>`;
-        // 仅当网格间距 > 40px 时显示文字防重叠
-        if (x - lastTextX > 40) {
-            html += `<text x="${x}" y="${h-4}" fill="var(--label)" font-size="9" text-anchor="middle">${z/1000}m</text>`;
-            lastTextX = x;
-        }
-    }
-    for(let y = 10; y <= h; y += 20) {
-        html += `<line x1="${camX}" y1="${y}" x2="${w}" y2="${y}" opacity="0.5"/>`;
-    }
-    html += `</g>`;
-
-    // 2️⃣ 安全区域绘制逻辑修正 (情况 A, B, C)
-    const redColor = 'rgba(255, 59, 48, 0.12)';
-    const greenColor = 'rgba(52, 199, 89, 0.12)';
-    const grayColor = 'rgba(100, 100, 100, 0.15)';
-
-    const draw_N_safe = Math.max(camX, Math.min(x_N_safe, endX));
-    const draw_L_safe = Math.max(camX, Math.min(x_L_safe, endX));
-
-    if (L_safe === Infinity) {
-        // 情况 C: 未触达极限
-        html += `<rect x="${camX}" y="0" width="${draw_N_safe - camX}" height="${h}" fill="${redColor}" />`;
-        html += `<rect x="${draw_N_safe}" y="0" width="${endX - draw_N_safe}" height="${h}" fill="${greenColor}" />`;
-        html += `<text x="${endX - 5}" y="44" fill="var(--success)" font-size="10" font-weight="bold" text-anchor="end">${isZH ? '未触达入屏极限' : 'Pos limit not reached'}</text>`;
-    } else if (x_L_safe > endX) {
-        // 情况 B: 极限超出视野
-        html += `<rect x="${camX}" y="0" width="${draw_N_safe - camX}" height="${h}" fill="${redColor}" />`;
-        html += `<rect x="${draw_N_safe}" y="0" width="${endX - draw_N_safe}" height="${h}" fill="${greenColor}" />`;
-        html += `<text x="${endX - 5}" y="44" fill="var(--success)" font-size="10" font-weight="bold" text-anchor="end">${isZH ? '入屏极限在视野外' : 'Pos limit outside view'} →</text>`;
-    } else {
-        // 情况 A: 极限在视野内
-        html += `<rect x="${camX}" y="0" width="${draw_N_safe - camX}" height="${h}" fill="${redColor}" />`;
-        html += `<rect x="${draw_N_safe}" y="0" width="${draw_L_safe - draw_N_safe}" height="${h}" fill="${greenColor}" />`;
-        html += `<rect x="${draw_L_safe}" y="0" width="${endX - draw_L_safe}" height="${h}" fill="${grayColor}" />`;
-    }
-
-    // 3️⃣ 标签防重叠分层布局 (y=16, 30, 44)
-    if (draw_N_safe > camX && draw_N_safe < endX) {
-        html += `<line x1="${draw_N_safe}" y1="0" x2="${draw_N_safe}" y2="${h}" stroke="var(--danger)" stroke-width="2" stroke-dasharray="5,3" />`;
-        html += `<text x="${draw_N_safe - 5}" y="16" fill="var(--danger)" font-size="11" font-weight="bold" text-anchor="end">${txtNegLim}</text>`;
-    }
-
-    if (draw_L_safe > camX && draw_L_safe < endX) {
-        html += `<line x1="${draw_L_safe}" y1="0" x2="${draw_L_safe}" y2="${h}" stroke="var(--primary)" stroke-width="2" stroke-dasharray="5,3" />`;
-        html += `<text x="${draw_L_safe + 5}" y="44" fill="var(--primary)" font-size="11" font-weight="bold" text-anchor="start">${txtPosLim}</text>`;
-    }
-
-    html += `<line x1="${x_S}" y1="0" x2="${x_S}" y2="${h}" stroke="var(--text)" stroke-width="2.5" />`;
-    html += `<text x="${x_S}" y="30" fill="var(--text)" font-size="11" font-weight="bold" text-anchor="middle">${txtZPS}</text>`;
-
-    const maxBaseVisual = 150;
-    const scaledIA = Math.min(80, Math.max(16, (appliedB / maxBaseVisual) * 80));
-    const cy1 = h/2 - scaledIA/2;
-    const cy2 = h/2 + scaledIA/2;
-
-    html += `<line x1="${camX}" y1="${cy1}" x2="${x_S}" y2="${h/2}" stroke="#ff3b30" stroke-width="1.5" />`;
-    html += `<line x1="${camX}" y1="${cy2}" x2="${x_S}" y2="${h/2}" stroke="#007AFF" stroke-width="1.5" />`;
-
-    const extendZ = max_Z;
-    if (x_S < zToX(extendZ)) {
-        html += `<line x1="${x_S}" y1="${h/2}" x2="${zToX(extendZ)}" y2="${h/2 + ((h/2 - cy1)/(x_S - camX)) * (zToX(extendZ) - x_S)}" stroke="#ff3b30" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>`;
-        html += `<line x1="${x_S}" y1="${h/2}" x2="${zToX(extendZ)}" y2="${h/2 + ((h/2 - cy2)/(x_S - camX)) * (zToX(extendZ) - x_S)}" stroke="#007AFF" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>`;
-    }
+    const mL = 40, mR = 20, mT = 20, mB = 20, plotW = w - mL - mR, plotH = h - mT - mB, camX = mL, yCam = h / 2;
+    let max_Z = Math.min(isInf ? S * 3 : Math.max(S * 1.5, actualL * 1.1), S * 4);
+    const zToX = z => camX + (z / max_Z) * plotW;
+    const x_S = Math.min(zToX(S), camX + plotW), endX = camX + plotW;
+    const visualB = Math.max(10, Math.min(plotH * 0.60, (appliedB / Math.max(globalData.maxBase || 1, 1)) * plotH * 0.30));
+    const yCamL = yCam - visualB / 2, yCamR = yCam + visualB / 2;
+    const X_int = Math.min(Math.max(camX + 6, zToX(N_safe)), camX + plotW * 0.55);
+    const slope = visualB / (2 * (X_int - camX));
+    const L_top = x => yCamL - (x - camX) * slope, L_bot = x => yCamL + (x - camX) * slope;
+    const R_top = x => yCamR - (x - camX) * slope, R_bot = x => yCamR + (x - camX) * slope;
     
-    // 6️⃣ 光路示意标签
-    html += `<text x="${camX + 15}" y="${h/2 - scaledIA/2 - 10}" fill="var(--label)" font-size="9" text-anchor="start">${txtRayDesc}</text>`;
-
-    html += `<rect x="${camX-20}" y="${cy1-8}" width="20" height="16" rx="3" fill="#ff3b30" />`;
-    html += `<circle cx="${camX}" cy="${cy1}" r="5" fill="#fff"/>`;
-    html += `<rect x="${camX-20}" y="${cy2-8}" width="20" height="16" rx="3" fill="#007AFF" />`;
-    html += `<circle cx="${camX}" cy="${cy2}" r="5" fill="#fff"/>`;
-    html += `<line x1="${camX-26}" y1="${cy1}" x2="${camX-26}" y2="${cy2}" stroke="var(--label)" stroke-width="1.5" />`;
-    html += `<text x="${camX-30}" y="${h/2}" fill="var(--label)" font-size="10" font-weight="bold" text-anchor="end">IA:${appliedB.toFixed(1)}</text>`;
-    
-    // 7️⃣ IA视觉夸张说明
-    html += `<text x="${camX-30}" y="${h/2 + 10}" fill="var(--label)" font-size="8" text-anchor="end">${txtIAExag}</text>`;
-
-    const actY = h - 28;
-    
-    if (x_S > x_N_act) {
-        html += `<rect x="${x_N_act}" y="${actY}" width="${x_S - x_N_act}" height="10" fill="${colorN}" opacity="0.8" rx="2"/>`;
+    let html = `<defs><pattern id="redHatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--danger)" stroke-width="1.5" opacity="0.35" /></pattern><pattern id="greenHatch" width="6" height="6" patternTransform="rotate(-45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--success)" stroke-width="1.5" opacity="0.4" /></pattern><linearGradient id="greyGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="var(--text)" stop-opacity="0.4"/><stop offset="100%" stop-color="var(--text)" stop-opacity="0.05"/></linearGradient></defs>`;
+    html += `<polygon points="${camX},${yCamL} ${endX},${L_top(endX)} ${endX},${L_bot(endX)}" fill="url(#redHatch)" />`;
+    html += `<polygon points="${camX},${yCamR} ${endX},${R_top(endX)} ${endX},${R_bot(endX)}" fill="url(#redHatch)" />`;
+    if (X_int < endX) html += `<polygon points="${X_int},${yCam} ${endX},${R_top(endX)} ${endX},${L_bot(endX)}" fill="url(#greyGrad)" stroke="var(--text)" stroke-width="1.5" stroke-opacity="0.6"/>`;
+    const xG = Math.max(x_S, X_int); 
+    if (xG < endX) {
+        html += `<polygon points="${xG},${R_top(xG)} ${endX},${R_top(endX)} ${endX},${L_top(endX)} ${xG},${L_top(xG)}" fill="url(#greenHatch)" />`;
+        html += `<polygon points="${xG},${L_bot(xG)} ${endX},${L_bot(endX)} ${endX},${R_bot(endX)} ${xG},${R_bot(xG)}" fill="url(#greenHatch)" />`;
     }
-    html += `<circle cx="${x_N_act}" cy="${actY+5}" r="5" fill="${colorN}" stroke="#fff" stroke-width="1.5"/>`;
-    html += `<text x="${Math.max(camX, Math.min(x_N_act, endX))}" y="${actY-6}" fill="${colorN}" font-size="11" font-weight="bold" text-anchor="middle">${labelN}</text>`;
-
-    if (!isInf) {
-        if (x_L_act > x_S) {
-            html += `<rect x="${x_S}" y="${actY}" width="${x_L_act - x_S}" height="10" fill="${colorL}" opacity="0.8" rx="2"/>`;
-        }
-        html += `<circle cx="${x_L_act}" cy="${actY+5}" r="5" fill="${colorL}" stroke="#fff" stroke-width="1.5"/>`;
-        html += `<text x="${Math.max(camX, Math.min(x_L_act, endX))}" y="${actY-6}" fill="${colorL}" font-size="11" font-weight="bold" text-anchor="middle">${labelL}</text>`;
-    } else {
-        // 🔟 无穷远表示优化
-        html += `<defs><linearGradient id="gradInf" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${rawPrimary}"/><stop offset="100%" stop-color="${rawBg}"/></linearGradient></defs>`;
-        html += `<rect x="${x_S}" y="${actY}" width="${endX - x_S}" height="10" fill="url(#gradInf)" opacity="0.8" rx="2"/>`;
-        html += `<text x="${endX - 5}" y="${actY-6}" fill="${colorL}" font-size="11" font-weight="bold" text-anchor="end">${labelL} → ∞</text>`;
-    }
-
+    html += `<line x1="${camX}" y1="${yCamL}" x2="${endX}" y2="${yCamL}" stroke="var(--danger)" stroke-dasharray="4,4" stroke-width="1.5" opacity="0.6"/>`;
+    html += `<line x1="${camX}" y1="${yCamR}" x2="${endX}" y2="${yCamR}" stroke="var(--primary)" stroke-dasharray="4,4" stroke-width="1.5" opacity="0.6"/>`;
+    const x_N_safe = zToX(N_safe), x_L_safe = L_safe === Infinity ? Infinity : zToX(L_safe);
+    if (N_safe > 0 && x_N_safe > camX && x_N_safe < endX) { html += `<line x1="${x_N_safe}" y1="${yCamL - 35}" x2="${x_N_safe}" y2="${yCamR + 35}" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"/><text x="${x_N_safe - 4}" y="${yCamL - 40}" fill="var(--danger)" font-size="9" text-anchor="end" opacity="0.8">Safe N</text>`; }
+    if (L_safe !== Infinity && x_L_safe > camX && x_L_safe < endX) { html += `<line x1="${x_L_safe}" y1="${yCamL - 35}" x2="${x_L_safe}" y2="${yCamR + 35}" stroke="var(--primary)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"/><text x="${x_L_safe + 4}" y="${yCamL - 40}" fill="var(--primary)" font-size="9" text-anchor="start" opacity="0.8">Safe L</text>`; }
+    html += `<line x1="${x_S}" y1="${mT - 10}" x2="${x_S}" y2="${h - mB + 10}" stroke="var(--text)" stroke-width="2" /><text x="${x_S}" y="${h - mB + 20}" fill="var(--text)" font-size="10" font-weight="bold" text-anchor="middle">ZPS</text>`;
+    const icW = 18, icH = 14;
+    html += `<rect x="${camX - icW}" y="${yCamL - icH/2}" width="${icW}" height="${icH}" rx="3" fill="var(--danger)" /><circle cx="${camX}" cy="${yCamL}" r="5" fill="var(--bg)" stroke="var(--danger)" stroke-width="2"/><rect x="${camX - icW}" y="${yCamR - icH/2}" width="${icW}" height="${icH}" rx="3" fill="var(--primary)" /><circle cx="${camX}" cy="${yCamR}" r="5" fill="var(--bg)" stroke="var(--primary)" stroke-width="2"/>`;
+    const x_N_act = Math.min(zToX(N_act), endX), x_L_act = isInf ? endX - 4 : Math.min(zToX(actualL), endX);
+    html += `<line x1="${x_N_act}" y1="${yCamL - 26}" x2="${x_N_act}" y2="${yCamR + 26}" stroke="var(--danger)" stroke-width="2.5" stroke-linecap="round"/><circle cx="${x_N_act}" cy="${yCamL - 26}" r="4" fill="var(--danger)"/><text x="${x_N_act}" y="${yCamL - 36}" fill="var(--danger)" font-size="11" font-weight="bold" text-anchor="middle">N</text>`;
+    if (!isInf) { html += `<line x1="${x_L_act}" y1="${yCamL - 26}" x2="${x_L_act}" y2="${yCamR + 26}" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"/><circle cx="${x_L_act}" cy="${yCamR + 26}" r="4" fill="var(--primary)"/><text x="${x_L_act}" y="${yCamR + 42}" fill="var(--primary)" font-size="11" font-weight="bold" text-anchor="middle">L</text>`; } else { html += `<text x="${endX - 5}" y="${yCamR + 35}" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="end">∞</text>`; }
     svg.innerHTML = html;
 }
 
 function renderInvalid(msg) {
     const isZH = currentLang === 'zh';
-    
-    const resMaxBaseEl = document.getElementById('resMaxBase');
-    if (resMaxBaseEl) resMaxBaseEl.textContent = isZH ? '无效' : 'N/A';
-    
-    const resAnalysisEl = document.getElementById('resAnalysis');
-    if (resAnalysisEl) resAnalysisEl.innerHTML = `<span class="tag-danger">${msg}</span>`;
-    
-    const resHitMmEl = document.getElementById('resHitMm');
-    if (resHitMmEl) resHitMmEl.textContent = '—';
-    
-    const resHitPxEl = document.getElementById('resHitPx');
-    if (resHitPxEl) resHitPxEl.textContent = '—';
-    
-    const rigHintEl = document.getElementById('rigHint');
-    if (rigHintEl) rigHintEl.textContent = '';
-    
-    const textReportBoxEl = document.getElementById('textReportBox');
-    if (textReportBoxEl) textReportBoxEl.value = (isZH ? '⚠ 错误\n' : '⚠ Error\n') + msg;
-
-    ['actPosVal', 'actNegVal', 'actTotalVal', 'limPosVal', 'limNegVal'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = '0.0';
-    });
-    
-    const fillPosEl = document.getElementById('fillPos');
-    if (fillPosEl) fillPosEl.style.width = '0%';
-    
-    const fillNegEl = document.getElementById('fillNeg');
-    if (fillNegEl) fillNegEl.style.width = '0%';
-
-    updateVisualizer();
-    updateTopDownView();
+    document.getElementById('resMaxBase').textContent = isZH ? '无效' : 'N/A';
+    document.getElementById('resAnalysis').innerHTML = `<span class="tag-danger">${msg}</span>`;
+    document.getElementById('resHitMm').textContent = '—';
+    document.getElementById('resHitPx').textContent = '—';
+    document.getElementById('textReportBox').value = (isZH ? '⚠ 错误\n' : '⚠ Error\n') + msg;
+    ['actPosVal', 'actNegVal', 'actTotalVal'].forEach(id => { document.getElementById(id).textContent = '0.0'; });
+    document.getElementById('fillPos').style.width = '0%';
+    document.getElementById('fillNeg').style.width = '0%';
+    updateVisualizer(); updateTopDownView();
 }
 
 function updateVisualCardDOM(focal, near, zps, far, actPosL, actNegL, useSec, isZH, mag, ipdLimit, sensorW, timelineRes, limPos, limNeg) {
     document.getElementById('vr-base').textContent = globalData.base + ' mm';
-    
     const secBaseEl = document.getElementById('vr-sec-base');
-    if (useSec) {
-        secBaseEl.style.display = 'block';
-        secBaseEl.textContent = isZH ? `辅屏 Sec IA: ${globalData.secBase} mm` : `Sec IA: ${globalData.secBase} mm`;
-    } else {
-        secBaseEl.style.display = 'none';
-    }
-    
-    // 反向布局: 出屏在左，入屏在右
-    document.getElementById('vr-neg').textContent = actNegL + ' mm';
-    document.getElementById('vr-neg-lim').textContent = 'Lim: ' + limNeg;
-    document.getElementById('vr-pos').textContent = actPosL + ' mm';
-    document.getElementById('vr-pos-lim').textContent = 'Lim: ' + limPos;
-    
+    if (useSec) { secBaseEl.style.display = 'block'; secBaseEl.textContent = isZH ? `辅屏 Sec IA: ${globalData.secBase} mm` : `Sec IA: ${globalData.secBase} mm`; } else { secBaseEl.style.display = 'none'; }
+    document.getElementById('vr-neg').textContent = actNegL + ' mm'; document.getElementById('vr-neg-lim').textContent = 'Lim: ' + limNeg;
+    document.getElementById('vr-pos').textContent = actPosL + ' mm'; document.getElementById('vr-pos-lim').textContent = 'Lim: ' + limPos;
     document.getElementById('vr-screen').textContent = document.getElementById('screenWidth').value + ' mm';
-    document.getElementById('vr-sensor').textContent = sensorW + ' mm';
-    document.getElementById('vr-res').textContent = timelineRes + ' px';
-    document.getElementById('vr-mag').textContent = mag + 'x';
-    document.getElementById('vr-focal').textContent = focal + ' mm';
-    document.getElementById('vr-ipd').textContent = ipdLimit + ' mm';
-    
-    document.getElementById('vr-n').textContent = near;
-    document.getElementById('vr-l').textContent = far;
-    document.getElementById('vr-zps-geom').textContent = zps; 
-    document.getElementById('vr-one-thirty').textContent = globalData.oneThirty + ' mm';
-    
-    document.getElementById('vr-bottleneck-title').textContent = isZH ? '后期合成 Post Shift' : 'POST PRODUCTION SHIFT';
-    
-    document.getElementById('vr-hit-mm').textContent = globalData.hitMm + ' mm';
-    document.getElementById('vr-hit-px').textContent = globalData.hitPx + ' px';
+    document.getElementById('vr-sensor').textContent = sensorW + ' mm'; document.getElementById('vr-res').textContent = timelineRes + ' px';
+    document.getElementById('vr-mag').textContent = mag + 'x'; document.getElementById('vr-focal').textContent = focal + ' mm';
+    document.getElementById('vr-ipd').textContent = ipdLimit + ' mm'; document.getElementById('vr-n').textContent = near;
+    document.getElementById('vr-l').textContent = far; document.getElementById('vr-zps-geom').textContent = zps; 
+    document.getElementById('vr-hit-mm').textContent = globalData.hitMm + ' mm'; document.getElementById('vr-hit-px').textContent = globalData.hitPx + ' px';
     document.getElementById('vr-shift').textContent = `L→${globalData.halfPx}px | R←${globalData.halfPx}px`;
+
+    const hitRangeEl = document.getElementById('vr-hit-range');
+    if (hitRangeEl && globalData.hitPxMin !== undefined) {
+        if (globalData.isNSLocked) {
+            if (globalData.maxShiftMm > 0.1) {
+                hitRangeEl.innerHTML = isZH ? `<span style="display:block; font-size:0.8rem; color:#34c759; line-height:1.4;"><b>💡 后期出屏预留空间：</b><br>可外移最多 <b>${globalData.maxShiftPxHalf} px/眼</b>，安全创造最高 <b>${globalData.maxShiftMm.toFixed(1)}mm</b> 出屏。</span>` : `<span style="display:block; font-size:0.8rem; color:#34c759; line-height:1.4;"><b>💡 Pop-out Headroom:</b><br>Shift L/R outward max <b>${globalData.maxShiftPxHalf} px/eye</b> for up to <b>${globalData.maxShiftMm.toFixed(1)}mm</b> pop-out.</span>`;
+            } else {
+                hitRangeEl.innerHTML = isZH ? `<span style="display:block; font-size:0.8rem; color:#ff3b30; line-height:1.4;"><b>⚠ 后期出屏已锁死：</b><br>背景正视差已达物理极限，不可外移画面。</span>` : `<span style="display:block; font-size:0.8rem; color:#ff3b30; line-height:1.4;"><b>⚠ Pop-out Locked:</b><br>Background IA is at max limit.</span>`;
+            }
+        } else {
+            const hdroom = globalData.hitHeadroom;
+            let line1 = isZH ? `当前: ${globalData.hitPx} px/眼` : `Current: ${globalData.hitPx} px/eye`;
+            let line2 = isZH ? `范围: ${globalData.hitPxMin} ~ ${globalData.hitPxMax} px/眼` : `Range: ${globalData.hitPxMin} ~ ${globalData.hitPxMax} px/eye`;
+            let line3 = hdroom > 0 ? (isZH ? `+${hdroom}px 追加余量` : `+${hdroom}px remaining`) : (isZH ? `⚠ 出屏已达极限` : `⚠ At pop-out limit`);
+            hitRangeEl.innerHTML = `<span style="display:block; color:#ccc;">${line1}</span><span style="display:block; color:#ffd60a; margin-top:2px;">${line2}</span><span style="display:block; font-size:0.75rem; color:${hdroom>0?'#aaa':'#ff453a'}; margin-top:4px;">${line3}</span>`;
+        }
+    }
     document.getElementById('vr-timestamp').textContent = new Date().toLocaleString(isZH?'zh-CN':'en-US',{hour12:false});
 }
 
 function scaleReportCard() {
-    const wrapper = document.getElementById('cardWrapper');
-    const card = document.getElementById('visualCardNode');
+    const wrapper = document.getElementById('cardWrapper'), card = document.getElementById('visualCardNode');
     if (!wrapper || !card) return;
-    const aw = wrapper.clientWidth;
-    
-    card.style.transform = 'none';
-    wrapper.style.height = 'auto';
-    const cardHeight = card.offsetHeight;
-    
-    if (aw > 0 && aw < 450) {
-        const s = aw / 450;
-        card.style.transform = `scale(${s})`;
-        wrapper.style.height = (cardHeight * s) + 'px';
-    } else {
-        card.style.transform = 'none';
-        wrapper.style.height = cardHeight + 'px';
-    }
+    const aw = wrapper.clientWidth; card.style.transform = 'none'; wrapper.style.height = 'auto';
+    if (aw > 0 && aw < 450) { const s = aw / 450; card.style.transform = `scale(${s})`; wrapper.style.height = (card.offsetHeight * s) + 'px'; } 
+    else { wrapper.style.height = card.offsetHeight + 'px'; }
 }
 
-window.addEventListener('resize', () => {
-    if (document.getElementById('visualCardPanel').classList.contains('show')) scaleReportCard();
-    updateTopDownView(); 
-});
+window.addEventListener('resize', () => { if (document.getElementById('visualCardPanel').closest('.show')) scaleReportCard(); updateTopDownView(); });
 
 function getVisMax() {
-    const n = parseFloat(document.getElementById('nearestDist').value) || 0.1;
-    const s = parseFloat(document.getElementById('subjectDist').value) || 0.1;
-    const l = parseFloat(document.getElementById('largestDist').value) || 0.1;
+    const n = parseFloat(document.getElementById('nearestDist').value) || 0.1, s = parseFloat(document.getElementById('subjectDist').value) || 0.1, l = parseFloat(document.getElementById('largestDist').value) || 0.1;
     const inf = document.getElementById('isInfinity').checked;
-    let m = Math.max(n, s);
-    if (!inf) m = Math.max(m, l);
-    return Math.max(m * 1.15, 2);
+    let m = Math.max(n, s); if (!inf) m = Math.max(m, l); return Math.max(m * 1.15, 2);
 }
 
 function initVisualizer() {
     [{ id:'visN', input:'nearestDist' }, { id:'visS', input:'subjectDist' }, { id:'visL', input:'largestDist' }]
     .forEach(m => {
         const el = document.getElementById(m.id);
-        el.addEventListener('mousedown', e => startDrag(e, m));
-        el.addEventListener('touchstart', e => startDrag(e, m), { passive: false });
+        el.addEventListener('mousedown', e => startDrag(e, m)); el.addEventListener('touchstart', e => startDrag(e, m), { passive: false });
     });
-    document.addEventListener('mousemove', onDrag);
-    document.addEventListener('mouseup', endDrag);
-    document.addEventListener('touchmove', onDrag, { passive: false });
-    document.addEventListener('touchend', endDrag);
+    document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', endDrag); document.addEventListener('touchmove', onDrag, { passive: false }); document.addEventListener('touchend', endDrag);
 }
 
-function startDrag(e, cfg) {
-    if (cfg.id === 'visL' && document.getElementById('isInfinity').checked) return;
-    e.preventDefault();
-    activeMarkerConfig = cfg;
-    isDraggingVis = true;
-    dragMaxDist = getVisMax();
-    document.getElementById(cfg.id).classList.add('active-drag');
-}
+function startDrag(e, cfg) { if (cfg.id === 'visL' && document.getElementById('isInfinity').checked) return; e.preventDefault(); activeMarkerConfig = cfg; isDraggingVis = true; dragMaxDist = getVisMax(); document.getElementById(cfg.id).classList.add('active-drag'); }
 
 function onDrag(e) {
-    if (!activeMarkerConfig) return;
-    e.preventDefault();
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const track = document.getElementById('visTrackContainer');
-    const rect = track.getBoundingClientRect();
-    let px = Math.max(0, cx - rect.left);
-    if (px >= rect.width - 2) { dragMaxDist = Math.min(50000, dragMaxDist * 1.02); px = rect.width; }
-    const pct = px / rect.width;
-    let d = Math.max(0.1, Math.round(pct * dragMaxDist * 10) / 10);
-
-    const n = parseFloat(document.getElementById('nearestDist').value) || 0.1;
-    const s = parseFloat(document.getElementById('subjectDist').value) || 0.1;
-    const l = parseFloat(document.getElementById('largestDist').value) || 0.1;
-    const useDavis = document.getElementById('useDavis').checked;
-    const isInf = document.getElementById('isInfinity').checked;
-
+    if (!activeMarkerConfig) return; e.preventDefault();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX, rect = document.getElementById('visTrackContainer').getBoundingClientRect();
+    let px = Math.max(0, cx - rect.left); if (px >= rect.width - 2) { dragMaxDist = Math.min(50000, dragMaxDist * 1.02); px = rect.width; }
+    let d = Math.max(0.1, Math.round((px / rect.width) * dragMaxDist * 10) / 10);
+    const s = parseFloat(document.getElementById('subjectDist').value) || 0.1, l = parseFloat(document.getElementById('largestDist').value) || 0.1, n = parseFloat(document.getElementById('nearestDist').value) || 0.1;
+    const isInf = document.getElementById('isInfinity').checked, useDavis = document.getElementById('useDavis').checked;
+    
     if (activeMarkerConfig.id === 'visN') {
-        if (d >= s) {
-            const ns = d + 0.1; document.getElementById('subjectDist').value = ns.toFixed(1);
-            if (!isInf && ns >= l) {
-                let nl = ns + 0.1; if (useDavis && nl < 2*d) nl = 2*d;
-                document.getElementById('largestDist').value = nl.toFixed(1);
-            }
-        }
+        if (d >= s) { const ns = d + 0.1; document.getElementById('subjectDist').value = ns.toFixed(1); if (!isInf && ns >= l) { let nl = ns + 0.1; if (useDavis && nl < 2*d) nl = 2*d; document.getElementById('largestDist').value = nl.toFixed(1); } }
         if (!isInf && useDavis && l < 2*d) document.getElementById('largestDist').value = (d*2).toFixed(1);
-        if (document.getElementById('bindNS').checked) {
-            document.getElementById('subjectDist').value = d.toFixed(1);
-        }
+        if (document.getElementById('bindNS').checked) document.getElementById('subjectDist').value = d.toFixed(1);
     }
     if (activeMarkerConfig.id === 'visS') {
         if (d <= n) document.getElementById('nearestDist').value = Math.max(0.1, d-0.1).toFixed(1);
-        if (!isInf && d >= l) {
-            let nl = d+0.1; if (useDavis && nl < 2*n) nl = 2*n;
-            document.getElementById('largestDist').value = nl.toFixed(1);
-        }
-        if (document.getElementById('bindNS').checked) {
-            document.getElementById('nearestDist').value = d.toFixed(1);
-        }
+        if (!isInf && d >= l) { let nl = d+0.1; if (useDavis && nl < 2*n) nl = 2*n; document.getElementById('largestDist').value = nl.toFixed(1); }
+        if (document.getElementById('bindNS').checked) document.getElementById('nearestDist').value = d.toFixed(1);
     }
     if (activeMarkerConfig.id === 'visL' && !isInf) {
         let minL = Math.max(useDavis ? 2*n : n+0.1, s+0.1);
-        if (d < minL) {
-            document.getElementById('subjectDist').value = Math.max(0.2, d-0.1).toFixed(1);
-            let tn = useDavis ? d/2 : d-0.2; tn = Math.min(tn, d-0.2);
-            document.getElementById('nearestDist').value = Math.max(0.1, tn).toFixed(1);
-        }
+        if (d < minL) { document.getElementById('subjectDist').value = Math.max(0.2, d-0.1).toFixed(1); let tn = useDavis ? d/2 : d-0.2; tn = Math.min(tn, d-0.2); document.getElementById('nearestDist').value = Math.max(0.1, tn).toFixed(1); }
     }
-    document.getElementById(activeMarkerConfig.input).value = d;
-    calculate();
+    document.getElementById(activeMarkerConfig.input).value = d; calculate();
 }
 
-function endDrag() {
-    if (activeMarkerConfig) {
-        document.getElementById(activeMarkerConfig.id).classList.remove('active-drag');
-        activeMarkerConfig = null; isDraggingVis = false; calculate();
+function endDrag() { if (activeMarkerConfig) { document.getElementById(activeMarkerConfig.id).classList.remove('active-drag'); activeMarkerConfig = null; isDraggingVis = false; calculate(); } }
+
+function resolveVisLabelCollisions() {
+    const labels = ['visN', 'visS', 'visL'].map(id => { const m = document.getElementById(id); return { m, lb: m.querySelector('.vis-label'), px: m.offsetLeft, visible: m.style.display !== 'none' }; }).filter(l => l.visible);
+    labels.forEach(l => { l.lb.style.top = '-38px'; l.lb.style.zIndex = '1'; }); labels.sort((a,b) => a.px - b.px);
+    for(let i=0; i<labels.length-1; i++) {
+        if (labels[i].lb.getBoundingClientRect().right > labels[i+1].lb.getBoundingClientRect().left - 4) {
+            labels[i+1].lb.style.top = '-62px'; labels[i+1].lb.style.zIndex = '2';
+            if(i+2 < labels.length && labels[i].lb.getBoundingClientRect().right > labels[i+2].lb.getBoundingClientRect().left - 4) labels[i+2].lb.style.top = '-86px';
+        }
     }
 }
 
 function updateVisualizer() {
-    const n = parseFloat(document.getElementById('nearestDist').value) || 0;
-    const s = parseFloat(document.getElementById('subjectDist').value) || 0;
-    const l = parseFloat(document.getElementById('largestDist').value) || 0;
-    const isInf = document.getElementById('isInfinity').checked;
+    const n = parseFloat(document.getElementById('nearestDist').value) || 0, s = parseFloat(document.getElementById('subjectDist').value) || 0, l = parseFloat(document.getElementById('largestDist').value) || 0;
     const mx = isDraggingVis ? dragMaxDist : getVisMax();
-    const set = (id, d, lbId, hide) => {
-        const el = document.getElementById(id), lb = document.getElementById(lbId);
-        if (hide) { el.style.display = 'none'; return; }
-        el.style.display = 'flex';
-        const pct = Math.min(100, Math.max(0, d/mx*100));
-        el.style.left = pct + '%';
-        lb.innerHTML = d.toFixed(1) + '<span style="font-size:8px">m</span>';
-    };
-    set('visN', n, 'visLabelN', false);
-    set('visS', s, 'visLabelS', false);
-    set('visL', l, 'visLabelL', isInf);
+    const set = (id, d, lbId, hide) => { const el = document.getElementById(id), lb = document.getElementById(lbId); if (hide) { el.style.display = 'none'; return; } el.style.display = 'flex'; el.style.left = Math.min(100, Math.max(0, d/mx*100)) + '%'; lb.innerHTML = d.toFixed(1) + '<span style="font-size:8px; opacity:0.8;">m</span>'; };
+    set('visN', n, 'visLabelN', false); set('visS', s, 'visLabelS', false); set('visL', l, 'visLabelL', document.getElementById('isInfinity').checked);
+    resolveVisLabelCollisions();
 }
 
 const SAVE_NUMS = ['posPercent','negPercent','ipdLimit','viewingDist','maxAngle','screenWidth','screen2Width','sensorWidth','sensorRes','focalLength','subjectDist','nearestDist','largestDist'];
 const SAVE_CHK  = ['useAngular','useDavis','autoNegRatio','isInfinity','useSecScreen','bindNS'];
 const SAVE_SEL  = ['screenPreset','sensorPreset','resPreset'];
 
-function saveParams() {
-    const d = {};
-    SAVE_NUMS.forEach(id => d[id] = document.getElementById(id).value);
-    SAVE_CHK.forEach(id => d[id] = document.getElementById(id).checked);
-    SAVE_SEL.forEach(id => d[id] = document.getElementById(id).value);
-    localStorage.setItem('stereo3dPro', JSON.stringify(d));
-}
-
+function saveParams() { const d = {}; SAVE_NUMS.forEach(id => d[id] = document.getElementById(id).value); SAVE_CHK.forEach(id => d[id] = document.getElementById(id).checked); SAVE_SEL.forEach(id => d[id] = document.getElementById(id).value); localStorage.setItem('stereo3dPro', JSON.stringify(d)); }
 function loadParams() {
     try {
-        const d = JSON.parse(localStorage.getItem('stereo3dPro') || 'null');
-        if (!d) return;
-        SAVE_NUMS.forEach(id => { if(d[id]!==undefined) document.getElementById(id).value=d[id]; });
-        SAVE_CHK.forEach(id => { if(d[id]!==undefined) document.getElementById(id).checked=d[id]; });
-        SAVE_SEL.forEach(id => { if(d[id]!==undefined) document.getElementById(id).value=d[id]; });
-    toggleAngularMode();
-    toggleSecScreen();
-    if (d.posPercent !== undefined) {
-        const sw = parseFloat(document.getElementById('screenWidth').value) || 10000;
-        const rec = getRecommendedPercentages(sw);
-        if (parseFloat(d.posPercent) !== rec.p || parseFloat(d.negPercent) !== rec.n) { overrideBudget(); }
-    }
-    document.getElementById('largestDist').disabled = document.getElementById('isInfinity').checked;
-} catch(e) {}
+        const d = JSON.parse(localStorage.getItem('stereo3dPro') || 'null'); if (!d) return;
+        SAVE_NUMS.forEach(id => { if(d[id]!==undefined) document.getElementById(id).value=d[id]; }); SAVE_CHK.forEach(id => { if(d[id]!==undefined) document.getElementById(id).checked=d[id]; }); SAVE_SEL.forEach(id => { if(d[id]!==undefined) document.getElementById(id).value=d[id]; });
+        toggleAngularMode(); toggleSecScreen();
+        if (d.posPercent !== undefined) { const sw = parseFloat(document.getElementById('screenWidth').value) || 10000, rec = getRecommendedPercentages(sw); if (parseFloat(d.posPercent) !== rec.p || parseFloat(d.negPercent) !== rec.n) overrideBudget(); }
+        document.getElementById('largestDist').disabled = document.getElementById('isInfinity').checked;
+    } catch(e) {}
 }
 
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.className = 'show';
-    setTimeout(() => t.className = '', 2600);
-}
-
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'show'; setTimeout(() => t.className = '', 2600); }
 function copyTextReport() {
-    if (!globalData.isValid) { showToast(currentLang==='zh'?'⚠ 无效参数，无法复制':'⚠ Invalid params'); return; }
-    const ta = document.getElementById('textReportBox');
-    ta.select();
-    try { document.execCommand('copy') ? showToast(currentLang==='zh'?'✅ 联通单已复制！':'✅ Report Copied!') : showToast('❌ Failed'); }
-    catch(e) { showToast('❌ Unsupported'); }
+    if (!globalData.isValid) { showToast(currentLang==='zh'?'⚠ 无效参数':'⚠ Invalid params'); return; }
+    document.getElementById('textReportBox').select();
+    try { document.execCommand('copy') ? showToast(currentLang==='zh'?'✅ 已复制！':'✅ Copied!') : showToast('❌ Failed'); } catch(e) { showToast('❌ Unsupported'); }
     window.getSelection().removeAllRanges();
 }
 
 function downloadVisualCard() {
-    if (!globalData.isValid) { showToast(currentLang==='zh'?'⚠ 参数无效，无法生成海报':'⚠ Invalid params'); return; }
-    const originalCard = document.getElementById('visualCardNode');
-    
-    showToast(currentLang==='zh'?'⏳ 渲染高清海报中…':'⏳ Rendering Poster...');
-
-    const offScreenContainer = document.createElement('div');
-    offScreenContainer.style.position = 'absolute';
-    offScreenContainer.style.left = '-9999px';
-    offScreenContainer.style.top = '-9999px';
-    offScreenContainer.style.width = '450px'; 
-
-    const clone = originalCard.cloneNode(true);
-    clone.style.transform = 'none'; 
-    clone.style.margin = '0';
-    clone.style.boxShadow = 'none';
-
-    offScreenContainer.appendChild(clone);
-    document.body.appendChild(offScreenContainer);
-
-    html2canvas(clone, { 
-        scale: 2, 
-        backgroundColor: '#151517', 
-        useCORS: true
-    }).then(canvas => {
-        document.body.removeChild(offScreenContainer); 
-        const fn = `Stereo3D_F${document.getElementById('focalLength').value}mm_B${globalData.base}mm_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.png`;
-        const a = document.createElement('a'); a.download = fn; a.href = canvas.toDataURL('image/png'); a.click();
-        showToast(currentLang==='zh'?'✅ 海报已下载！':'✅ Poster Downloaded!');
-    }).catch((err) => { 
-        console.error(err);
-        document.body.removeChild(offScreenContainer); 
-        showToast('❌ Failed'); 
-    });
+    if (!globalData.isValid) { showToast(currentLang==='zh'?'⚠ 参数无效':'⚠ Invalid params'); return; }
+    showToast(currentLang==='zh'?'⏳ 渲染中…':'⏳ Rendering...');
+    const offScreenContainer = document.createElement('div'); offScreenContainer.style.position = 'absolute'; offScreenContainer.style.left = '-9999px'; offScreenContainer.style.width = '450px'; 
+    const clone = document.getElementById('visualCardNode').cloneNode(true); clone.style.transform = 'none'; clone.style.margin = '0'; clone.style.boxShadow = 'none';
+    offScreenContainer.appendChild(clone); document.body.appendChild(offScreenContainer);
+    html2canvas(clone, { scale: 2, backgroundColor: '#151517', useCORS: true }).then(canvas => {
+        document.body.removeChild(offScreenContainer); const a = document.createElement('a'); a.download = `Stereo3D_F${document.getElementById('focalLength').value}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.png`; a.href = canvas.toDataURL('image/png'); a.click(); showToast('✅ Success!');
+    }).catch(() => { document.body.removeChild(offScreenContainer); showToast('❌ Failed'); });
 }
 
+function adjustTooltipBounds(icon) {
+    const pop = icon.querySelector('.info-pop'); pop.style.transform = 'translateX(-50%)'; const rect = pop.getBoundingClientRect();
+    if (rect.right > window.innerWidth) pop.style.transform = `translateX(calc(-50% - ${rect.right - window.innerWidth + 16}px))`;
+    else if (rect.left < 0) pop.style.transform = `translateX(calc(-50% + ${-rect.left + 16}px))`;
+}
+
+document.addEventListener('mouseover', e => { const icon = e.target.closest('.info-icon'); if (icon) adjustTooltipBounds(icon); });
+document.addEventListener('click', e => {
+    const icon = e.target.closest('.info-icon');
+    if (icon) { e.stopPropagation(); const wasActive = icon.classList.contains('active'); document.querySelectorAll('.info-icon.active').forEach(el => { el.classList.remove('active'); el.querySelector('.info-pop').style.transform = 'translateX(-50%)'; }); if (!wasActive) { icon.classList.add('active'); adjustTooltipBounds(icon); } return; }
+    document.querySelectorAll('.info-icon.active').forEach(el => { el.classList.remove('active'); el.querySelector('.info-pop').style.transform = 'translateX(-50%)'; });
+});
+
 window.onload = function() {
-    loadParams();
-    checkScreenInput(); checkSensorInput(); checkResInput();
-    initVisualizer(); calculate();
-    setTimeout(scaleReportCard, 100);
+    loadParams(); checkScreenInput(); checkSensorInput(); checkResInput(); initVisualizer(); calculate(); setTimeout(scaleReportCard, 100);
+    if (window.ResizeObserver) new ResizeObserver(() => updateTopDownView()).observe(document.getElementById('topDownSvg').parentElement);
 };
 </script>
 </body>
