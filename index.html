@@ -675,7 +675,7 @@
                     
                     <div id="importBox" style="display:none; padding:16px; background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:12px;">
                         <label style="font-size:0.85rem; margin-bottom:8px;" data-zh="在此粘贴联通单文本：" data-en="Paste report text here:">在此粘贴联通单文本：</label>
-                        <textarea id="importText" class="terminal-box" style="height:120px; background:var(--input-bg); color:var(--text); border:1px solid var(--primary); margin-top:0;" placeholder="===== 3D 现场拍摄联通单 ===== ..."></textarea>
+                        <textarea id="importText" class="terminal-box" style="height:120px; background:var(--input-bg); color:var(--text); border:1px solid var(--primary); margin-top:0;" placeholder="=======================================..."></textarea>
                         <button class="btn-primary" style="background:var(--success);" onclick="parseReport()"><span data-zh="解析并应用参数" data-en="Parse & Apply Settings">解析并应用参数</span></button>
                     </div>
                 </div>
@@ -779,6 +779,54 @@
                     <button class="btn-primary" onclick="downloadVisualCard()" style="margin-top:16px;">
                         <span data-zh="↓ 导出高清海报 Export HD Poster" data-en="↓ Export HD Poster">↓ 导出高清海报 Export HD Poster</span>
                     </button>
+                </div>
+            </div>
+
+            <!-- 新增：核心参数与后期指南面板 (移至海报后方并扩充) -->
+            <div class="accordion-card" style="margin-top:24px;">
+                <button class="accordion-btn" onclick="toggleAccordion('glossaryPanel')">
+                    <span>📖 <span data-zh="核心参数与后期指南 (FAQ)" data-en="Glossary & Post-Production Guide (FAQ)">核心参数与后期指南 (FAQ)</span></span>
+                    <span id="glossaryPanel_icon">▼</span>
+                </button>
+                <div class="accordion-content" id="glossaryPanel" style="font-size:0.85rem; color:var(--label); line-height:1.6; background:var(--card);">
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight:800; color:var(--text); margin-bottom:4px; font-size:0.9rem;" data-zh="1. 什么是 后期 HIT 平移？" data-en="1. What is Post HIT Shift?">1. 什么是 后期 HIT 平移？</div>
+                        <span data-zh="HIT (Horizontal Image Translation) 是一种标准的立体后期手法。通过在剪辑/合成软件中，将左眼画面向右、右眼画面向左进行水平移动，可以将整个 3D 场景在 Z 轴上“整体推向”观众方向。" data-en="HIT (Horizontal Image Translation) shifts the Left eye image right, and Right eye image left in post, pushing the entire 3D scene closer to the audience.">HIT (Horizontal Image Translation) 是一种标准的立体后期手法。通过在剪辑/合成软件中，将左眼画面向右、右眼画面向左进行水平移动，可以将整个 3D 场景在 Z 轴上“整体推向”观众方向。</span>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight:800; color:var(--primary); margin-bottom:4px; font-size:0.9rem;" data-zh="2. “加强余量 (Headroom)”是什么意思？" data-en="2. What does 'Pop-out Headroom' mean?">2. “加强余量 (Headroom)”是什么意思？</div>
+                        <span data-zh="指示单眼画面在安全出屏极限内还能往外平移的最大像素值。后期可以通过这个数值安全地强化出屏冲击力，而绝不会让观众产生眩晕。" data-en="Indicates the max pixels each eye can be shifted outward safely to enhance the 3D pop-out effect without causing eye strain.">指示单眼画面在安全出屏极限内还能往外平移的最大像素值。后期可以通过这个数值安全地强化出屏冲击力，而绝不会让观众产生眩晕。</span>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight:800; color:var(--danger); margin-bottom:4px; font-size:0.9rem;" data-zh="3. “出屏已锁死 (Pop-out Locked)”是什么情况？" data-en="3. What is 'Pop-out Locked'?">3. “出屏已锁死 (Pop-out Locked)”是什么情况？</div>
+                        <span data-zh="当你锁定了“主体即最近景(N=S)”，且背景已经吃满了正视差极限预算。此时后期绝不能再使用 HIT 将画面向外拉，否则背景会超标产生严重的发散视差，破坏 3D 幻觉。" data-en="When background positive parallax reaches its limit, shifting images outward via HIT is forbidden as it causes background divergence.">当你锁定了“主体即最近景(N=S)”，且背景已经吃满了正视差极限预算。此时后期绝不能再使用 HIT 将画面向外拉，否则背景会超标产生严重的发散视差，破坏 3D 幻觉。</span>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight:800; color:var(--text); margin-bottom:4px; font-size:0.9rem;" data-zh="4. 什么是 零视差面 S (ZPS)？" data-en="4. What is Zero Parallax Setting (ZPS)?">4. 什么是 零视差面 S (ZPS)？</div>
+                        <span data-zh="ZPS 面上的物体在左右眼中完全重叠，成像在物理屏幕表面，也是观众眼球最放松的参考点。通常将此设定为主要拍摄对象（主体）。" data-en="Objects at ZPS appear exactly on the physical screen surface with zero disparity. Usually set to the main subject.">ZPS 面上的物体在左右眼中完全重叠，成像在物理屏幕表面，也是观众眼球最放松的参考点。通常将此设定为主要拍摄对象（主体）。</span>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight:800; color:var(--warning); margin-bottom:4px; font-size:0.9rem;" data-zh="5. 什么是 1/30 法则？" data-en="5. What is the 1/30 Rule?">5. 什么是 1/30 法则？</div>
+                        <span data-zh="立体摄影的经典经验法则：设定轴距（IA）应小于等于主体距离的 1/30。例如主体在 3000mm 外，轴距尽量不超过 100mm。本工具在海报中提供了该理论值作为安全参考。" data-en="A classic rule of thumb: Interaxial distance (IA) should not exceed 1/30th of the main subject distance.">立体摄影的经典经验法则：设定轴距（IA）应小于等于主体距离的 1/30。例如主体在 3000mm 外，轴距尽量不超过 100mm。本工具在海报中提供了该理论值作为安全参考。</span>
+                    </div>
+                    <div>
+                        <div style="font-weight:800; color:var(--text); margin-bottom:4px; font-size:0.9rem;" data-zh="6. 边缘截断违例 (Edge Violation)？" data-en="6. What is Edge Violation?">6. 边缘截断违例 (Edge Violation)？</div>
+                        <span data-zh="当具有“负视差（出屏）”的物体触碰到画面的左右边缘时，观众大脑会产生“出屏物体被后方屏幕边缘切断”的空间逻辑冲突，引发严重的晕眩和 3D 幻觉破灭。锁定 N=S 构图可绝对避免此问题。" data-en="When a pop-out object touches the left/right frame edge, it creates a visual conflict with the screen boundary, breaking the 3D window illusion.">当具有“负视差（出屏）”的物体触碰到画面的左右边缘时，观众大脑会产生“出屏物体被后方屏幕边缘切断”的空间逻辑冲突，引发严重的晕眩和 3D 幻觉破灭。锁定 N=S 构图可绝对避免此问题。</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 知识库与参考资料部分 -->
+            <div class="accordion-card" style="margin-top:24px;">
+                <button class="accordion-btn" onclick="toggleAccordion('referencePanel')">
+                    <span>📚 <span data-zh="立体摄影知识库 & 参考资料" data-en="3D Cinematography Knowledge Base">立体摄影知识库 & 参考资料</span></span>
+                    <span id="referencePanel_icon">▼</span>
+                </button>
+                <div class="accordion-content" id="referencePanel" style="font-size:0.85rem; color:var(--text); line-height:1.6; background:var(--card);">
+                    <p style="margin-top: 0; margin-bottom: 12px; color: var(--label);" data-zh="关于各参数的物理意义、视差法则及立体拍摄实务，请参考以下行业标准文献：" data-en="For detailed explanations of parameters, parallax rules, and stereoscopic practices, please refer to industry standards:">关于各参数的物理意义、视差法则及立体拍摄实务，请参考以下行业标准文献：</p>
+                    <ul style="padding-left: 20px; margin-bottom: 0; display: flex; flex-direction: column; gap: 8px;">
+                        <li><a href="https://zq-moonlight.github.io/Stereoscopic-3D-Camera-Base-Calculator/基于双目视差的裸眼3D系统参考架构与通用技术要求.pdf" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">基于双目视差的裸眼3D系统参考架构与通用技术要求 (PDF)</a></li>
+                    </ul>
                 </div>
             </div>
 
@@ -967,17 +1015,16 @@ function parseReport() {
 
     const extract = (regex) => { const m = text.match(regex); return m ? m[1] : null; };
 
-    // Regex extraction
+    // Regex extraction (兼容双语专业联通单的新正则)
     const focal = extract(/Focal[^:]*:\s*([\d.]+)/i) || extract(/焦距[^:]*:\s*([\d.]+)/i);
-    const near = extract(/Near N[^:]*:\s*([\d.]+)/i) || extract(/近景[^:]*:\s*([\d.]+)/i);
-    const zps = extract(/ZPS S[^:]*:\s*([\d.]+)/i) || extract(/零视差[^:]*:\s*([\d.]+)/i);
-    const far = extract(/Far L[^:]*:\s*([\d.]+|∞)/i) || extract(/远景[^:]*:\s*([\d.]+|∞)/i);
+    const near = extract(/Near[^:]*:\s*([\d.]+)/i) || extract(/近景[^:]*:\s*([\d.]+)/i);
+    const zps = extract(/ZPS[^:]*:\s*([\d.]+)/i) || extract(/零视差[^:]*:\s*([\d.]+)/i);
+    const far = extract(/Far[^:]*:\s*([\d.]+|∞)/i) || extract(/远景[^:]*:\s*([\d.]+|∞)/i);
     
-    const screen = extract(/Screen[^:]*:\s*([\d.]+)/i) || extract(/主屏宽[^:]*:\s*([\d.]+)/i);
+    const screen = extract(/Screen[^:]*:\s*([\d.]+)/i) || extract(/主屏宽度?[^:]*:\s*([\d.]+)/i);
     const sensor = extract(/Sensor[^:]*:\s*([\d.]+)/i) || extract(/传感器[^:]*:\s*([\d.]+)/i);
-    const res = extract(/Res[^:]*:\s*([\d.]+)/i) || extract(/分辨率[^:]*:\s*([\d.]+)/i);
-    
-    const ia = extract(/Applied IA[^:]*:\s*([\d.]+)/i) || extract(/实际设定轴距[^:]*:\s*([\d.]+)/i) || extract(/设定轴距[^:]*:\s*([\d.]+)/i);
+    const res = extract(/Res[^:]*:\s*([\d.]+)/i) || extract(/时间线[^:]*:\s*([\d.]+)/i) || extract(/分辨[^:]*:\s*([\d.]+)/i);
+    const ia = extract(/Applied IA[^:]*:\s*([\d.]+)/i) || extract(/设定轴距[^:]*:\s*([\d.]+)/i);
 
     let importedCount = 0;
 
@@ -1322,79 +1369,83 @@ function updateActuals() {
     const fStr = F.toString(), nStr = (N/1000).toFixed(1)+'m', sStr = (S/1000).toFixed(1)+'m';
     const lStr = isInf ? '∞' : (actualL/1000).toFixed(1)+'m';
 
-    let postInfoZH = `[后期联通 POST SHIFT]\nHIT 物理值 : ${globalData.hitMm} mm\n像素平移量 : L→${halfPx}px | R←${halfPx}px\n`;
-    if (globalData.isNSLocked) {
-        if (globalData.maxShiftMm > 0.1) {
-            postInfoZH += `💡出屏预留 : 可向外平移最多 ${globalData.maxShiftPxHalf} px/眼，创造最高 ${globalData.maxShiftMm.toFixed(1)} mm 出屏`;
-        } else {
-            postInfoZH += `⚠出屏预留 : 已锁死 (正视差达极限，后期不可外移画面)`;
-        }
-    } else {
-        postInfoZH += `💡加强余量 : 剩余 ${globalData.hitHeadroom} px/眼 (至出屏极限)`;
-    }
-
-    let postInfoEN = `[POST PRODUCTION SHIFT]\nHIT Shift   : ${globalData.hitMm} mm\nPixel Shift : L Eye -> ${halfPx}px | R Eye <- ${halfPx}px\n`;
-    if (globalData.isNSLocked) {
-        if (globalData.maxShiftMm > 0.1) {
-            postInfoEN += `💡Pop-out Room: Max outward shift ${globalData.maxShiftPxHalf} px/eye for ${globalData.maxShiftMm.toFixed(1)} mm pop-out`;
-        } else {
-            postInfoEN += `⚠Pop-out Room: Locked (Positive IA maxed, cannot shift outward)`;
-        }
-    } else {
-        postInfoEN += `💡Pop-out Room: ${globalData.hitHeadroom} px/eye remaining`;
-    }
-
     const toolUrl = window.location.href.split('?')[0]; 
 
     const elTextReportBox = document.getElementById('textReportBox');
     if (elTextReportBox) {
-        elTextReportBox.value = isZH ? 
-`===== 3D 现场拍摄联通单 =====
-🎬 [核心架设 SETUP]
+        let popOutInfoZH = '';
+        let popOutInfoEN = '';
+        if (globalData.isNSLocked) {
+            if (globalData.maxShiftMm > 0.1) {
+                popOutInfoZH = `最大出屏外移 : ${globalData.maxShiftPxHalf} px/眼 -> 创造 ${globalData.maxShiftMm.toFixed(1)} mm 出屏`;
+                popOutInfoEN = `Max Pop-out  : ${globalData.maxShiftPxHalf} px/eye -> ${globalData.maxShiftMm.toFixed(1)} mm`;
+            } else {
+                popOutInfoZH = `最大出屏外移 : 锁定 (不可外移)`;
+                popOutInfoEN = `Max Pop-out  : Locked (Cannot shift outward)`;
+            }
+        } else {
+            const safeHeadroomHalf = Math.floor(globalData.hitHeadroom / 2);
+            popOutInfoZH = `单眼追加余量 : ${safeHeadroomHalf} px/眼`;
+            popOutInfoEN = `Per-eye Room : ${safeHeadroomHalf} px/eye`;
+        }
+
+        const reportZH = `===== 3D 现场拍摄联通单 =====
+
+[ 核心架设 SETUP ]
 设定轴距 Applied IA : ${globalData.base} mm
-(极限范围 Max Safe  : ${globalData.maxBase.toFixed(2)} mm)
+极限轴距 Max Safe IA: ${globalData.maxBase.toFixed(2)} mm
 镜头焦距 Focal      : ${fStr} mm
 
-💻 ${postInfoZH}
+[ 后期联通 POST SHIFT ]
+HIT 物理平移 : ${globalData.hitMm} mm
+像素平移量   : L-> ${halfPx}px | R<- ${halfPx}px
+${popOutInfoZH}
 
-⚙️ [系统与景深 SYSTEM & DEPTH]
-主屏宽 Screen : ${sw} mm
-传感器 Sensor : ${senW} mm
-分辨率 Res    : ${res} px
-近景 Near N   : ${nStr}
-零视差 ZPS S  : ${sStr}
-远景 Far L    : ${lStr}
+[ 系统与景深 SYSTEM & DEPTH ]
+主屏宽度 Screen : ${sw} mm
+传感器宽 Sensor : ${senW} mm
+时间线分辨 Res  : ${res} px
+最近景 N        : ${nStr}
+零视差面 S      : ${sStr}
+最远景 L        : ${lStr}
 
-📊 [视差分析 PARALLAX]
+[ 视差分析 PARALLAX ]
 实际出屏 Act Neg : ${actualNeg.toFixed(1)} mm (上限: ${globalData.limNeg.toFixed(1)})
 实际入屏 Act Pos : ${actualPos.toFixed(1)} mm (上限: ${globalData.limPos.toFixed(1)})
 
 🔗 工具网址: ${toolUrl}
-(将此文本粘贴至计算器"导入"面板即可全量复原参数)
-===========================` : 
-`===== 3D CAM ON-SET REPORT =====
-🎬 [CORE SETUP]
+(点击下方【📥 导入单据】按钮，粘贴此文本可恢复参数)
+===========================`;
+
+        const reportEN = `===== 3D STEREOSCOPIC ON-SET REPORT =====
+
+[ CORE SETUP ]
 Applied IA    : ${globalData.base} mm
-(Max Safe IA  : ${globalData.maxBase.toFixed(2)} mm)
+Max Safe IA   : ${globalData.maxBase.toFixed(2)} mm
 Focal Length  : ${fStr} mm
 
-💻 ${postInfoEN}
+[ POST PRODUCTION ]
+HIT Shift     : ${globalData.hitMm} mm
+Pixel Shift   : L-> ${halfPx}px | R<- ${halfPx}px
+${popOutInfoEN}
 
-⚙️ [SYSTEM & DEPTH]
-Screen Width  : ${sw} mm
+[ SYSTEM & DEPTH ]
+Main Screen   : ${sw} mm
 Sensor Width  : ${senW} mm
 Timeline Res  : ${res} px
-Near Obj (N)  : ${nStr}
-ZPS      (S)  : ${sStr}
-Far Bg   (L)  : ${lStr}
+Near Obj N    : ${nStr}
+ZPS S         : ${sStr}
+Far Bg L      : ${lStr}
 
-📊 [PARALLAX ANALYSIS]
+[ PARALLAX ANALYSIS ]
 Act Negative  : ${actualNeg.toFixed(1)} mm (Lim: ${globalData.limNeg.toFixed(1)})
 Act Positive  : ${actualPos.toFixed(1)} mm (Lim: ${globalData.limPos.toFixed(1)})
 
 🔗 Tools URL: ${toolUrl}
-(Paste this report into the app's "Import" panel to restore)
-===========================`;
+(Click "📥 Import Report" below and paste this text to restore)
+===========================================`;
+
+        elTextReportBox.value = isZH ? reportZH : reportEN;
     }
 
     const ipd = parseFloat(document.getElementById('ipdLimit').value) || 63.5;
@@ -1489,23 +1540,30 @@ function updateVisualCardDOM(focal, near, zps, far, actPosL, actNegL, useSec, is
     document.getElementById('vr-mag').textContent = mag + 'x'; document.getElementById('vr-focal').textContent = focal + ' mm';
     document.getElementById('vr-ipd').textContent = ipdLimit + ' mm'; document.getElementById('vr-n').textContent = near;
     document.getElementById('vr-l').textContent = far; document.getElementById('vr-zps-geom').textContent = zps; 
-    document.getElementById('vr-hit-mm').textContent = globalData.hitMm + ' mm'; document.getElementById('vr-hit-px').textContent = globalData.hitPx + ' px';
+    document.getElementById('vr-hit-px').textContent = globalData.hitPx + ' px';
     document.getElementById('vr-shift').textContent = `L→${globalData.halfPx}px | R←${globalData.halfPx}px`;
 
     const hitRangeEl = document.getElementById('vr-hit-range');
     if (hitRangeEl && globalData.hitPxMin !== undefined) {
+        const minHalf = Math.floor(globalData.hitPxMin / 2);
+        const maxHalf = Math.floor(globalData.hitPxMax / 2);
+        const headRoomHalf = Math.floor(globalData.hitHeadroom / 2);
+
         if (globalData.isNSLocked) {
             if (globalData.maxShiftMm > 0.1) {
-                hitRangeEl.innerHTML = isZH ? `<span style="display:block; font-size:0.8rem; color:#34c759; line-height:1.4;"><b>💡 后期出屏预留空间：</b><br>可外移最多 <b>${globalData.maxShiftPxHalf} px/眼</b>，安全创造最高 <b>${globalData.maxShiftMm.toFixed(1)}mm</b> 出屏。</span>` : `<span style="display:block; font-size:0.8rem; color:#34c759; line-height:1.4;"><b>💡 Pop-out Headroom:</b><br>Shift L/R outward max <b>${globalData.maxShiftPxHalf} px/eye</b> for up to <b>${globalData.maxShiftMm.toFixed(1)}mm</b> pop-out.</span>`;
+                hitRangeEl.innerHTML = isZH ? 
+                    `<span style="display:block; font-size:0.8rem; color:#34c759; line-height:1.4;"><b>💡 后期出屏预留：</b><br>允许调整范围：总计 0 ~ ${globalData.maxShiftPxHalf * 2} px (单眼可调节 ${globalData.maxShiftPxHalf} px)<br>安全创造最高 <b>${globalData.maxShiftMm.toFixed(1)}mm</b> 出屏。</span>` : 
+                    `<span style="display:block; font-size:0.8rem; color:#34c759; line-height:1.4;"><b>💡 Pop-out Headroom:</b><br>Allowed Range: Total 0 ~ ${globalData.maxShiftPxHalf * 2} px (Per eye: ${globalData.maxShiftPxHalf} px)<br>For up to <b>${globalData.maxShiftMm.toFixed(1)}mm</b> pop-out.</span>`;
             } else {
-                hitRangeEl.innerHTML = isZH ? `<span style="display:block; font-size:0.8rem; color:#ff3b30; line-height:1.4;"><b>⚠ 后期出屏已锁死：</b><br>背景正视差已达物理极限，不可外移画面。</span>` : `<span style="display:block; font-size:0.8rem; color:#ff3b30; line-height:1.4;"><b>⚠ Pop-out Locked:</b><br>Background IA is at max limit.</span>`;
+                hitRangeEl.innerHTML = isZH ? 
+                    `<span style="display:block; font-size:0.8rem; color:#ff3b30; line-height:1.4;"><b>⚠ 后期出屏已锁死：</b><br>背景正视差已达物理极限，不可外移画面。</span>` : 
+                    `<span style="display:block; font-size:0.8rem; color:#ff3b30; line-height:1.4;"><b>⚠ Pop-out Locked:</b><br>Background IA is at max limit.</span>`;
             }
         } else {
-            const hdroom = globalData.hitHeadroom;
-            let line1 = isZH ? `当前: ${globalData.hitPx} px/眼` : `Current: ${globalData.hitPx} px/eye`;
-            let line2 = isZH ? `范围: ${globalData.hitPxMin} ~ ${globalData.hitPxMax} px/眼` : `Range: ${globalData.hitPxMin} ~ ${globalData.hitPxMax} px/eye`;
-            let line3 = hdroom > 0 ? (isZH ? `+${hdroom}px 追加余量` : `+${hdroom}px remaining`) : (isZH ? `⚠ 出屏已达极限` : `⚠ At pop-out limit`);
-            hitRangeEl.innerHTML = `<span style="display:block; color:#ccc;">${line1}</span><span style="display:block; color:#ffd60a; margin-top:2px;">${line2}</span><span style="display:block; font-size:0.75rem; color:${hdroom>0?'#aaa':'#ff453a'}; margin-top:4px;">${line3}</span>`;
+            let line1 = isZH ? `当前: 总计 ${globalData.hitPx} px (单眼 ${globalData.halfPx} px)` : `Current: Total ${globalData.hitPx} px (Per eye ${globalData.halfPx} px)`;
+            let line2 = isZH ? `允许调整范围: 总计 ${globalData.hitPxMin} ~ ${globalData.hitPxMax} px (单眼 ${minHalf} ~ ${maxHalf} px)` : `Allowed: Total ${globalData.hitPxMin} ~ ${globalData.hitPxMax} px (Per eye ${minHalf} ~ ${maxHalf} px)`;
+            let line3 = headRoomHalf > 0 ? (isZH ? `单眼追加余量: +${headRoomHalf} px` : `Per eye remaining: +${headRoomHalf} px`) : (isZH ? `⚠ 出屏已达极限` : `⚠ At pop-out limit`);
+            hitRangeEl.innerHTML = `<span style="display:block; color:#ccc;">${line1}</span><span style="display:block; color:#ffd60a; margin-top:2px;">${line2}</span><span style="display:block; font-size:0.75rem; color:${headRoomHalf>0?'#34c759':'#ff453a'}; margin-top:4px; font-weight:800;">${line3}</span>`;
         }
     }
     document.getElementById('vr-timestamp').textContent = new Date().toLocaleString(isZH?'zh-CN':'en-US',{hour12:false});
@@ -1610,12 +1668,45 @@ function copyTextReport() {
 function downloadVisualCard() {
     if (!globalData.isValid) { showToast(currentLang==='zh'?'⚠ 参数无效':'⚠ Invalid params'); return; }
     showToast(currentLang==='zh'?'⏳ 渲染中…':'⏳ Rendering...');
-    const offScreenContainer = document.createElement('div'); offScreenContainer.style.position = 'absolute'; offScreenContainer.style.left = '-9999px'; offScreenContainer.style.width = '450px'; 
-    const clone = document.getElementById('visualCardNode').cloneNode(true); clone.style.transform = 'none'; clone.style.margin = '0'; clone.style.boxShadow = 'none';
-    offScreenContainer.appendChild(clone); document.body.appendChild(offScreenContainer);
-    html2canvas(clone, { scale: 2, backgroundColor: '#151517', useCORS: true }).then(canvas => {
-        document.body.removeChild(offScreenContainer); const a = document.createElement('a'); a.download = `Stereo3D_F${document.getElementById('focalLength').value}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.png`; a.href = canvas.toDataURL('image/png'); a.click(); showToast('✅ Success!');
-    }).catch(() => { document.body.removeChild(offScreenContainer); showToast('❌ Failed'); });
+    
+    const offScreenContainer = document.createElement('div'); 
+    offScreenContainer.style.position = 'fixed'; 
+    offScreenContainer.style.top = '0px';
+    offScreenContainer.style.left = '-9999px'; 
+    offScreenContainer.style.width = '450px'; 
+    offScreenContainer.style.zIndex = '-1';
+    
+    const clone = document.getElementById('visualCardNode').cloneNode(true); 
+    clone.style.transform = 'none'; 
+    clone.style.margin = '0'; 
+    clone.style.boxShadow = 'none';
+    clone.style.height = 'auto';
+    clone.style.minHeight = 'auto';
+    
+    offScreenContainer.appendChild(clone); 
+    document.body.appendChild(offScreenContainer);
+    
+    setTimeout(() => {
+        const renderHeight = clone.scrollHeight;
+        html2canvas(clone, { 
+            scale: 2, 
+            backgroundColor: '#151517', 
+            useCORS: true,
+            width: 450,
+            height: renderHeight,
+            windowWidth: 450
+        }).then(canvas => {
+            document.body.removeChild(offScreenContainer); 
+            const a = document.createElement('a'); 
+            a.download = `Stereo3D_F${document.getElementById('focalLength').value}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.png`; 
+            a.href = canvas.toDataURL('image/png'); 
+            a.click(); 
+            showToast(currentLang==='zh'?'✅ 导出成功!':'✅ Success!');
+        }).catch(() => { 
+            document.body.removeChild(offScreenContainer); 
+            showToast(currentLang==='zh'?'❌ 导出失败':'❌ Failed'); 
+        });
+    }, 150);
 }
 
 function adjustTooltipBounds(icon) {
