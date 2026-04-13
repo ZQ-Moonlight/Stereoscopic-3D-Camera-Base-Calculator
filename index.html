@@ -1294,7 +1294,7 @@ function updateActuals() {
     if (N === S) {
         globalData.isNSLocked = true;
         const remainingPos = Math.max(0, globalData.limPos - actualPos);
-        const maxShiftMm = Math.min(remainingPos, globalData.limNeg);
+        const maxShiftMm = Math.min(remainingPos, globalData.limNeg, actualPos);
         const maxShiftPxTotal = sw > 0 ? (maxShiftMm / sw) * res : 0;
         const maxShiftPxHalf = Math.round(maxShiftPxTotal / 2);
         
