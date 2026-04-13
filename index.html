@@ -1412,9 +1412,9 @@ ${popOutInfoZH}
 [ 视差分析 PARALLAX ]
 实际出屏 Act Neg : ${actualNeg.toFixed(1)} mm (上限: ${globalData.limNeg.toFixed(1)})
 实际入屏 Act Pos : ${actualPos.toFixed(1)} mm (上限: ${globalData.limPos.toFixed(1)})
-
-🔗 工具网址: ${toolUrl}
-(点击下方【📥 导入单据】按钮，粘贴此文本可恢复参数)
+===========================
+工具网址: ${toolUrl}
+(点击现场参数联通单下方【📥 导入单据】按钮，粘贴此文本可恢复参数)
 ===========================`;
 
         const reportEN = `===== 3D STEREOSCOPIC ON-SET REPORT =====
@@ -1440,9 +1440,9 @@ Far Bg L      : ${lStr}
 [ PARALLAX ANALYSIS ]
 Act Negative  : ${actualNeg.toFixed(1)} mm (Lim: ${globalData.limNeg.toFixed(1)})
 Act Positive  : ${actualPos.toFixed(1)} mm (Lim: ${globalData.limPos.toFixed(1)})
-
-🔗 Tools URL: ${toolUrl}
-(Click "📥 Import Report" below and paste this text to restore)
+===========================================
+Tools URL: ${toolUrl}
+(Click the [📥 Import Report] button below the "On-set Parameter Report", and paste this text to restore.)
 ===========================================`;
 
         elTextReportBox.value = isZH ? reportZH : reportEN;
